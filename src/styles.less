@@ -1,9 +1,23 @@
-/* add css module styles here (optional) */
+@headerColor: #f2f2f2; // Default header color
+@rowColor: #ffffff; // Default row color
 
-.test {
-  margin: 2em;
-  padding: 0.5em;
-  border: 2px solid #000;
-  font-size: 2em;
-  text-align: center;
+.advanced-table {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: @headerColor;
+    }
+
+    tr:nth-child(even) {
+      background-color: @rowColor;
+    }
+  }
 }
