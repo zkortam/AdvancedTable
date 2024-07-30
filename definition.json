@@ -1,0 +1,31 @@
+{
+  "icon": "./assets/icon.svg",
+  "name": "Advanced Table",
+  "hint": "Table that contains multiple charts within it",
+  "settings": [
+    {
+      "name": {
+        "key": "group"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "setting"
+          },
+          "key": "key1",
+          "type": "boolean"
+        }
+      ]
+    }
+  ],
+  "bindingsTrays": [
+    {
+      "key": "tray-key",
+      "name": {
+        "key": "tray"
+      },
+      "queryRole": "measure",
+      "minCount": 1
+    }
+  ]
+}
