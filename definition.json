@@ -53,6 +53,32 @@
           "type": "number",
           "hint": "Select the bar height (px)",
           "default": 20
+        },
+        {
+          "name": {
+            "key": "Bar Rounding"
+          },
+          "key": "barRounding",
+          "type": "number",
+          "hint": "Select the bar rounding (px)",
+          "default": 30
+        },
+        {
+          "name": {
+            "key": "Table Border Color"
+          },
+          "key": "tableBorderColor",
+          "type": "color",
+          "hint": "Select the table border color",
+          "default": "#A9A9A9"
+        },
+        {
+          "name": {
+            "key": "Alternating Row Colors"
+          },
+          "key": "alternatingRowColors",
+          "type": "boolean",
+          "hint": "Enable alternating row colors"
         }
       ]
     }
