@@ -10,6 +10,25 @@
       border: 1px solid #ccc;
       padding: 8px;
       text-align: left;
+
+      &.sorted {
+        color: green;
+      }
+
+      .resize-handle {
+        display: inline-block;
+        width: 5px;
+        height: 100%;
+        cursor: col-resize;
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+      }
+
+      .chart-cell {
+        position: relative;
+      }
     }
 
     th {
@@ -18,6 +37,81 @@
 
     tr:nth-child(even) {
       background-color: @rowColor;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+
+      .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        position: relative;
+
+        .button-group {
+          display: flex;
+          justify-content: center;
+          margin-top: 10px;
+
+          button {
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+
+            &.yes {
+              background-color: blue;
+              color: white;
+              margin-right: 10px;
+              width: 150px;
+            }
+
+            &.cancel {
+              background-color: grey;
+              color: black;
+              width: 100px;
+            }
+          }
+        }
+      }
+    }
+
+    .hover-chart,
+    .persistent-chart {
+      position: fixed;
+      transform: translateY(-50%);
+      width: 400px;
+      height: 200px;
+      background-color: white;
+      border: 2px solid #A9A9A9;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .persistent-chart {
+      button.close {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
     }
   }
 }
