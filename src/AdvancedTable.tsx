@@ -22,24 +22,26 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
 
   const [lists, setLists] = useState<number[][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
-  const [groupLabels, setGroupLabels] = useState<string[]>([]);
+  const [groupLabels, setGroupLabels] = useState<(string | number)[]>([]);
   const [columnLabel, setColumnLabel] = useState<string>("");
   const [valueLabel, setValueLabel] = useState<string>("");
   const [maxValues, setMaxValues] = useState<number[]>([]);
-  const [barRounding, setBarRounding] = useState<number>(30);
-  const [tableBorderColor, setTableBorderColor] = useState<string>("#A9A9A9");
-  const [alternatingRowColors, setAlternatingRowColors] = useState<boolean>(true);
-  const [columnWidths, setColumnWidths] = useState<number[]>([]);
+  const [tableSettings, setTableSettings] = useState({
+    barRounding: 30,
+    tableBorderColor: "#A9A9A9",
+    alternatingRowColors: true,
+    columnWidths: [] as number[],
+    tableBorderRadius: 0,
+    showValueColumns: true,
+    showBarCharts: true,
+    showLineCharts: true,
+    showRowNumbers: false
+  });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [tableBorderRadius, setTableBorderRadius] = useState<number>(0);
   const [sortModalOpen, setSortModalOpen] = useState<{ open: boolean, index: number | null, top: number | null, left: number | null }>({ open: false, index: null, top: null, left: null });
   const [sortedData, setSortedData] = useState<{ index: number | null, direction: string | null }>({ index: null, direction: null });
   const [hoveredChart, setHoveredChart] = useState<{ data: number[], show: boolean, label: string, column: number | null, cellLeft: number | null }>({ data: [], show: false, label: '', column: null, cellLeft: null });
   const [persistentChart, setPersistentChart] = useState<{ data: number[], show: boolean, label: string, column: number | null, cellLeft: number | null }>({ data: [], show: false, label: '', column: null, cellLeft: null });
-
-  const [showValueColumns, setShowValueColumns] = useState<boolean>(true);
-  const [showBarCharts, setShowBarCharts] = useState<boolean>(true);
-  const [showLineCharts, setShowLineCharts] = useState<boolean>(true);
 
   const tableRef = useRef<HTMLTableElement>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -73,31 +75,19 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     }
 
     if (settings) {
-      if (settings.barRounding !== undefined) {
-        setBarRounding(settings.barRounding);
-      }
-      if (settings.tableBorderColor) {
-        setTableBorderColor(settings.tableBorderColor);
-      }
-      if (settings.alternatingRowColors !== undefined) {
-        setAlternatingRowColors(settings.alternatingRowColors);
-      }
-      if (settings.tableBorderRadius !== undefined) {
-        setTableBorderRadius(settings.tableBorderRadius);
-      }
-      if (settings.showValueColumns !== undefined) {
-        setShowValueColumns(settings.showValueColumns);
-      }
-      if (settings.showBarCharts !== undefined) {
-        setShowBarCharts(settings.showBarCharts);
-      }
-      if (settings.showLineCharts !== undefined) {
-        setShowLineCharts(settings.showLineCharts);
-      }
+      setTableSettings({
+        barRounding: settings.barRounding ?? 30,
+        tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
+        alternatingRowColors: settings.alternatingRowColors ?? true,
+        columnWidths: [150, ...Array(numberOfLists * 3).fill(100)],
+        tableBorderRadius: settings.tableBorderRadius ?? 0,
+        showValueColumns: settings.showValueColumns ?? true,
+        showBarCharts: settings.showBarCharts ?? true,
+        showLineCharts: settings.showLineCharts ?? true,
+        showRowNumbers: settings.showRowNumbers ?? false
+      });
     }
 
-    const initialColumnWidths = [150, ...Array(numberOfLists * 3).fill(100)];
-    setColumnWidths(initialColumnWidths);
   }, [data, settings]);
 
   const formatNumber = (num: number): string => {
@@ -124,13 +114,13 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
 
     return (
       <div style={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-        {showBarCharts && (
+        {tableSettings.showBarCharts && (
           <>
             <div style={{ flex: '1', height: '20px', position: 'relative' }}>
-              <div style={{ width: `${negativeWidth}%`, height: '20px', backgroundColor: 'red', position: 'absolute', right: 0, borderRadius: `${barRounding}px` }}></div>
+              <div style={{ width: `${negativeWidth}%`, height: '20px', backgroundColor: 'red', position: 'absolute', right: 0, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
             <div style={{ flex: '1', height: '20px', position: 'relative' }}>
-              <div style={{ width: `${positiveWidth}%`, height: '20px', backgroundColor: 'green', position: 'absolute', left: 0, borderRadius: `${barRounding}px` }}></div>
+              <div style={{ width: `${positiveWidth}%`, height: '20px', backgroundColor: 'green', position: 'absolute', left: 0, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
           </>
         )}
@@ -141,13 +131,13 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const handleMouseDown = (e: React.MouseEvent, index: number) => {
     e.preventDefault();
     const startX = e.clientX;
-    const startWidth = columnWidths[index];
+    const startWidth = tableSettings.columnWidths[index];
 
     const handleMouseMove = (e: MouseEvent) => {
       const newWidth = startWidth + (e.clientX - startX);
-      const newColumnWidths = [...columnWidths];
+      const newColumnWidths = [...tableSettings.columnWidths];
       newColumnWidths[index] = newWidth;
-      setColumnWidths(newColumnWidths);
+      setTableSettings({ ...tableSettings, columnWidths: newColumnWidths });
     };
 
     const handleMouseUp = () => {
@@ -166,7 +156,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     );
     setLists(initialLists.map(list => list.slice(0, 50)));
     const initialColumnWidths = [150, ...Array(numberOfLists * 3).fill(100)];
-    setColumnWidths(initialColumnWidths);
+    setTableSettings({ ...tableSettings, columnWidths: initialColumnWidths });
     setIsModalOpen(false);
   };
 
@@ -273,14 +263,12 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     setPersistentChart({ data: [], show: false, label: '', column: null, cellLeft: null });
   };
 
-  const extractDataForState = (state: string) => {
+  const extractDataForState = (state: string | number) => {
     const stateData = data.data.filter(row => row[0]?.value === state);
     const timestamps = stateData.map(row => new Date(Number(row[1]?.value || 0))); // Convert to Date
     const profits = stateData.map(row => Number(row[2]?.value || 0)); // Assuming profit is in the third column
     return { timestamps, profits };
   };
-
-  const { timestamps, profits } = extractDataForState('California');
 
   return (
     <div>
@@ -431,7 +419,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           />
         </div>
       )}
-      {persistentChart.show && persistentChart.cellLeft !== null &&(
+      {persistentChart.show && persistentChart.cellLeft !== null && (
         <div style={{
           position: 'fixed',
           top: `${window.innerHeight / 2}px`,
@@ -502,8 +490,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
       )}
       <div style={{
         overflow: 'hidden',
-        borderRadius: `${tableBorderRadius}px`,
-        border: `2px solid ${tableBorderColor}`,
+        borderRadius: `${tableSettings.tableBorderRadius}px`,
+        border: `2px solid ${tableSettings.tableBorderColor}`,
         width: '100%',
         boxSizing: 'border-box'
       }}>
@@ -512,13 +500,18 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           style={{
             borderCollapse: 'collapse',
             width: '100%',
-            borderColor: tableBorderColor
+            borderColor: tableSettings.tableBorderColor
           }}
           onContextMenu={handleTableRightClick}
         >
           <thead>
             <tr>
-              <th style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[0]}px`, position: 'relative' }}
+              {tableSettings.showRowNumbers && (
+                <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px', position: 'relative' }}>
+                  #
+                </th>
+              )}
+              <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px`, position: 'relative' }}
                 onContextMenu={(e) => handleSortClick(e, 0)}>
                 {columnLabel}
                 <div
@@ -537,8 +530,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
               </th>
               {titles.map((title, index) => (
                 <React.Fragment key={index}>
-                  {showValueColumns && (
-                    <th style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[index * 3 + 1]}px`, position: 'relative', color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }}
+                  {tableSettings.showValueColumns && (
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 1]}px`, position: 'relative', color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }}
                       onContextMenu={(e) => handleSortClick(e, index * 3 + 1)}>
                       {title} Value
                       <div
@@ -556,8 +549,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                       />
                     </th>
                   )}
-                  {showBarCharts && (
-                    <th style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
+                  {tableSettings.showBarCharts && (
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
                       {title} Chart
                       <div
                         style={{
@@ -574,8 +567,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                       />
                     </th>
                   )}
-                  {showLineCharts && (
-                    <th className="chart-cell" style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[index * 3 + 3]}px`, position: 'relative' }}
+                  {tableSettings.showLineCharts && (
+                    <th className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 3]}px`, position: 'relative' }}
                       onMouseEnter={(e) => handleSparklineHover(lists[index].slice(0, index + 1), index, `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}
                       onMouseMove={(e) => handleSparklineMove(lists[index].slice(0, index + 1), index, `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}
                       onMouseLeave={handleSparklineLeave}
@@ -602,22 +595,25 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           </thead>
           <tbody>
             {groupLabels.map((label, rowIndex) => (
-              <tr key={label} style={{ backgroundColor: alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
-                <td style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[0]}px` }}>{label}</td>
+              <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
+                {tableSettings.showRowNumbers && (
+                  <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
+                )}
+                <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
                 {lists.map((list, colIndex) => (
                   <React.Fragment key={colIndex}>
-                    {showValueColumns && (
-                      <td style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[colIndex * 3 + 1]}px` }}>
-                        {formatNumber(list[rowIndex])}
+                    {tableSettings.showValueColumns && (
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
+                        {typeof list[rowIndex] === 'number' ? formatNumber(list[rowIndex]) : list[rowIndex]}
                       </td>
                     )}
-                    {showBarCharts && (
-                      <td style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[colIndex * 3 + 2]}px` }}>
+                    {tableSettings.showBarCharts && (
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px` }}>
                         {renderChartCell(list[rowIndex], maxValues[colIndex])}
                       </td>
                     )}
-                    {showLineCharts && (
-                      <td className="chart-cell" style={{ border: `2px solid ${tableBorderColor}`, width: `${columnWidths[colIndex * 3 + 3]}px` }}
+                    {tableSettings.showLineCharts && (
+                      <td className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
                         onMouseEnter={(e) => handleSparklineHover(list.slice(0, rowIndex + 1), colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
                         onMouseMove={(e) => handleSparklineMove(list.slice(0, rowIndex + 1), colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
                         onMouseLeave={handleSparklineLeave}
