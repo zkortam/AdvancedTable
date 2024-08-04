@@ -82,6 +82,15 @@
           "type": "boolean",
           "hint": "Toggle alternating row colors",
           "default": true
+        },
+        {
+          "name": {
+            "key": "Show Row Numbers"
+          },
+          "key": "showRowNumbers",
+          "type": "boolean",
+          "hint": "Toggle the visibility of row numbers",
+          "default": false
         }
       ]
     }
