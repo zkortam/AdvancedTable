@@ -23,30 +23,6 @@
         },
         {
           "name": {
-            "key": "Title Color"
-          },
-          "key": "titleColor",
-          "type": "color",
-          "hint": "Select the title color"
-        },
-        {
-          "name": {
-            "key": "Value Color"
-          },
-          "key": "valueColor",
-          "type": "color",
-          "hint": "Select the value color"
-        },
-        {
-          "name": {
-            "key": "Bar Color"
-          },
-          "key": "barColor",
-          "type": "color",
-          "hint": "Select the bar color"
-        },
-        {
-          "name": {
             "key": "Bar Rounding"
           },
           "key": "barRounding",
@@ -62,6 +38,50 @@
           "type": "number",
           "hint": "Select the border radius for the table (px)",
           "default": 0
+        },
+        {
+          "name": {
+            "key": "Table Border Color"
+          },
+          "key": "tableBorderColor",
+          "type": "color",
+          "hint": "Select the border color for the table"
+        },
+        {
+          "name": {
+            "key": "Show Value Columns"
+          },
+          "key": "showValueColumns",
+          "type": "boolean",
+          "hint": "Toggle the visibility of value columns",
+          "default": true
+        },
+        {
+          "name": {
+            "key": "Show Bar Charts"
+          },
+          "key": "showBarCharts",
+          "type": "boolean",
+          "hint": "Toggle the visibility of bar charts",
+          "default": true
+        },
+        {
+          "name": {
+            "key": "Show Line Charts"
+          },
+          "key": "showLineCharts",
+          "type": "boolean",
+          "hint": "Toggle the visibility of line charts",
+          "default": true
+        },
+        {
+          "name": {
+            "key": "Alternating Row Colors"
+          },
+          "key": "alternatingRowColors",
+          "type": "boolean",
+          "hint": "Toggle alternating row colors",
+          "default": true
         }
       ]
     }
