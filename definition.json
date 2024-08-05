@@ -108,34 +108,44 @@
     {
       "key": "tray-key",
       "name": {
-        "key": "measures"
+        "key": "Measures"
       },
       "queryRole": "measure",
       "settings": [
         {
-          "name": "Number Format",
+          "name": {
+            "key": "Number Format"
+          },
           "settings": [
             {
-              "name": "Scale",
+              "name": {
+                "key": "Scale"
+              },
               "key": "scale1",
               "type": "scale"
             },
             {
-              "name": "Format",
+              "name": {
+                "key": "Format"
+              },
               "key": "format",
               "type": "number-format",
-              "defaultValue": "###,###"
+              "default": "###,###"
             },
             {
-              "name": "Color",
+              "name": {
+                "key": "Color"
+              },
               "key": "color",
               "type": "color"
             },
             {
-              "name": "Transparency",
+              "name": {
+                "key": "Transparency"
+              },
               "key": "transparency",
               "type": "number",
-              "defaultValue": 70
+              "default": 70
             }
           ]
         }
