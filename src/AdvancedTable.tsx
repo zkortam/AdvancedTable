@@ -10,6 +10,7 @@ import { Sparklines, SparklinesLine } from 'react-sparklines';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './styles.less';
+import { formatNumber, handleMouseDown, handleSortClick, handleSort } from './utils'; // Import the functions
 
 interface Props {
   context: Context<TContext>;
@@ -17,7 +18,6 @@ interface Props {
   data: ResponseData;
   drillDown: onDrillDownFunction;
 }
-
 
 const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) => {
   const settings = context?.component?.settings;
@@ -92,23 +92,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
 
   }, [data, settings]);
 
-  const formatNumber = (num: number): string => {
-    const absNum = Math.abs(num);
-    let formattedNum;
-
-    if (absNum >= 1e9) {
-      formattedNum = (num / 1e9).toFixed(2) + 'B';
-    } else if (absNum >= 1e6) {
-      formattedNum = (num / 1e6).toFixed(2) + 'M';
-    } else if (absNum >= 1e3) {
-      formattedNum = (num / 1e3).toFixed(2) + 'K';
-    } else {
-      formattedNum = num.toFixed(2);
-    }
-
-    return formattedNum.replace(/(\.0+|0+)$/, ''); // Remove unnecessary trailing zeros
-  };
-
   const renderChartCell = (value: number, maxValue: number) => {
     const percentage = (Math.abs(value) / maxValue) * 100;
     const positiveWidth = value > 0 ? percentage : 0;
@@ -128,27 +111,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         )}
       </div>
     );
-  };
-
-  const handleMouseDown = (e: React.MouseEvent, index: number) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startWidth = tableSettings.columnWidths[index];
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = startWidth + (e.clientX - startX);
-      const newColumnWidths = [...tableSettings.columnWidths];
-      newColumnWidths[index] = newWidth;
-      setTableSettings({ ...tableSettings, columnWidths: newColumnWidths });
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
   };
 
   const handleResetTable = () => {
@@ -171,66 +133,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     ) {
       setIsModalOpen(true);
     }
-  };
-
-  const handleSortClick = (e: React.MouseEvent, index: number) => {
-    e.preventDefault();
-    if (sortModalOpen.index === index) {
-      setSortModalOpen({ open: false, index: null, top: null, left: null });
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setSortModalOpen({ open: true, index, top: rect.bottom, left: rect.left });
-    }
-  };
-
-  const handleSort = (direction: string) => {
-    if (sortModalOpen.index === null) return;
-
-    const index = sortModalOpen.index;
-    const newLists = [...lists];
-
-    if (direction === 'og') {
-      setSortedData({ index: null, direction: null });
-    } else {
-      if (index === 0) {
-        // Sorting for the first column (groupLabels)
-        const sortedIndices: number[] = [];
-        for (let i = 0; i < groupLabels.length; i++) {
-          sortedIndices.push(i);
-        }
-        sortedIndices.sort((a, b) => {
-          if (typeof groupLabels[a] === 'number' && typeof groupLabels[b] === 'number') {
-            return direction === 'asc' ? groupLabels[a] - groupLabels[b] : groupLabels[b] - groupLabels[a];
-          } else {
-            return direction === 'asc'
-              ? (groupLabels[a] as string).localeCompare(groupLabels[b] as string)
-              : (groupLabels[b] as string).localeCompare(groupLabels[a] as string);
-          }
-        });
-
-        setGroupLabels(sortedIndices.map(i => groupLabels[i]));
-        setLists(lists.map(list => sortedIndices.map(i => list[i])));
-      } else {
-        // Sorting for value columns
-        const listIndex = Math.floor((index - 1) / 3);
-        const sortedIndices: number[] = [];
-        for (let i = 0; i < newLists[listIndex].length; i++) {
-          sortedIndices.push(i);
-        }
-        sortedIndices.sort((a, b) => {
-          return direction === 'asc'
-            ? newLists[listIndex][a] - newLists[listIndex][b]
-            : newLists[listIndex][b] - newLists[listIndex][a];
-        });
-
-        setLists(newLists.map(list => sortedIndices.map(i => list[i])));
-        setGroupLabels(sortedIndices.map(i => groupLabels[i]));
-      }
-
-      setSortedData({ index, direction });
-    }
-
-    setSortModalOpen({ open: false, index: null, top: null, left: null });
   };
 
   const handleSparklineHover = (list: number[], column: number, label: string, cellLeft: number) => {
@@ -289,9 +191,9 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
       {sortModalOpen.open && (
         <div className="sort-modal" style={{ top: sortModalOpen.top || 0, left: sortModalOpen.left || 0 }} onClick={() => setSortModalOpen({ open: false, index: null, top: null, left: null })}>
           <div onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => handleSort('asc')}>Low {'>'} High</button>
-            <button onClick={() => handleSort('desc')}>High {'>'} Low</button>
-            <button onClick={() => handleSort('og')}>Revert to OG</button>
+            <button onClick={() => handleSort('asc', sortModalOpen, lists, groupLabels, setGroupLabels, setLists, setSortedData, setSortModalOpen)}>Low {'>'} High</button>
+            <button onClick={() => handleSort('desc', sortModalOpen, lists, groupLabels, setGroupLabels, setLists, setSortedData, setSortModalOpen)}>High {'>'} Low</button>
+            <button onClick={() => handleSort('og', sortModalOpen, lists, groupLabels, setGroupLabels, setLists, setSortedData, setSortModalOpen)}>Revert to OG</button>
           </div>
         </div>
       )}
@@ -398,22 +300,22 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                   #
                 </th>
               )}
-              <th style={{ width: `${tableSettings.columnWidths[0]}px` }} onContextMenu={(e) => handleSortClick(e, 0)}>
+              <th style={{ width: `${tableSettings.columnWidths[0]}px` }} onContextMenu={(e) => handleSortClick(e, 0, sortModalOpen, setSortModalOpen)}>
                 {columnLabel}
-                <div className="resizer" onMouseDown={(e) => handleMouseDown(e, 0)} />
+                <div className="resizer" onMouseDown={(e) => handleMouseDown(e, 0, tableSettings.columnWidths[0], tableSettings.columnWidths, setTableSettings)} />
               </th>
               {titles.map((title, index) => (
                 <React.Fragment key={index}>
                   {tableSettings.showValueColumns && (
-                    <th style={{ width: `${tableSettings.columnWidths[index * 3 + 1]}px`, color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }} onContextMenu={(e) => handleSortClick(e, index * 3 + 1)}>
+                    <th style={{ width: `${tableSettings.columnWidths[index * 3 + 1]}px`, color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }} onContextMenu={(e) => handleSortClick(e, index * 3 + 1, sortModalOpen, setSortModalOpen)}>
                       {title} Value
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 1)} />
+                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 1, tableSettings.columnWidths[index * 3 + 1], tableSettings.columnWidths, setTableSettings)} />
                     </th>
                   )}
                   {tableSettings.showBarCharts && (
                     <th style={{ width: `${tableSettings.columnWidths[index * 3 + 2]}px` }}>
                       {title} Chart
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 2)} />
+                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 2, tableSettings.columnWidths[index * 3 + 2], tableSettings.columnWidths, setTableSettings)} />
                     </th>
                   )}
                   {tableSettings.showLineCharts && (
@@ -423,7 +325,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                       onMouseLeave={handleSparklineLeave}
                       onContextMenu={(e) => handleSparklineRightClick(e, lists[index].slice(0, index + 1), `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}>
                       {title} Sparkline
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 3)} />
+                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 3, tableSettings.columnWidths[index * 3 + 3], tableSettings.columnWidths, setTableSettings)} />
                     </th>
                   )}
                 </React.Fragment>
