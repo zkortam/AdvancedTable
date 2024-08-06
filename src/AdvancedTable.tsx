@@ -151,7 +151,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         </div>
       )}
       {hoveredChart.cellLeft !== null && (
-        <div className="chart-popup" style={{ left: `${hoveredChart.cellLeft - 400 - 50}px`, height: '300px', width: '90%' }}>
+        <div className="chart-popup" style={{ left: `${hoveredChart.cellLeft - 610}px`, maxWidth: '600px', height: '300px', width: '90%' }}>
           <Line
             data={{
               labels: hoveredChart.dates.map(date => date.split(' ')[0]), // Only keep the date part
@@ -222,7 +222,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         </div>
       )}
       {persistentChart.show && persistentChart.cellLeft !== null && (
-        <div className="chart-popup" style={{ left: `${persistentChart.cellLeft - 400 - 50}px`, height: '300px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+        <div className="chart-popup" style={{ left: `${persistentChart.cellLeft - 610}px`, maxWidth: '600px', height: '300px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
           <button className="close-button" onClick={handleCloseChart}>Close</button>
           <Line
             data={{
@@ -384,42 +384,41 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
               ))}
             </tr>
           </thead>
-        <tbody>
-  {groupLabels.map((label, rowIndex) => (
-    <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
-      {tableSettings.showRowNumbers && (
-        <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
-      )}
-      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
-      {lists[rowIndex].map((values, colIndex) => (
-        <React.Fragment key={colIndex}>
-          {tableSettings.showValueColumns && (
-            <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
-              {typeof values[0] === 'number' ? formatNumber(values.reduce((a, b) => a + b, 0)) : values[0]}
-            </td>
-          )}
-          {tableSettings.showBarCharts && (
-            <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px` }}>
-              {renderChartCell(values, maxValues[colIndex])}
-            </td>
-          )}
-          {tableSettings.showLineCharts && (
-            <td className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
-                onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
-                onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
-                onMouseLeave={handleSparklineLeave}
-                onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}>
-              <Sparklines data={values} limit={100} width={100} height={20}>
-                <SparklinesLine style={{ stroke: "blue", fill: "none" }} />
-              </Sparklines>
-            </td>
-          )}
-        </React.Fragment>
-      ))}
-    </tr>
-  ))}
-</tbody>
-
+          <tbody>
+            {groupLabels.map((label, rowIndex) => (
+              <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
+                {tableSettings.showRowNumbers && (
+                  <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
+                )}
+                <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
+                {lists[rowIndex].map((values, colIndex) => (
+                  <React.Fragment key={colIndex}>
+                    {tableSettings.showValueColumns && (
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
+                        {typeof values[0] === 'number' ? formatNumber(values.reduce((a, b) => a + b, 0)) : values[0]}
+                      </td>
+                    )}
+                    {tableSettings.showBarCharts && (
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px` }}>
+                        {renderChartCell(values, maxValues[colIndex])}
+                      </td>
+                    )}
+                    {tableSettings.showLineCharts && (
+                      <td className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
+                          onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
+                          onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
+                          onMouseLeave={handleSparklineLeave}
+                          onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}>
+                        <Sparklines data={values} limit={100} width={100} height={20}>
+                          <SparklinesLine style={{ stroke: "blue", fill: "none" }} />
+                        </Sparklines>
+                      </td>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>
