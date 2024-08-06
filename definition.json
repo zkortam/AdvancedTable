@@ -82,15 +82,6 @@
           "type": "boolean",
           "hint": "Toggle alternating row colors",
           "default": true
-        },
-        {
-          "name": {
-            "key": "Show Row Numbers"
-          },
-          "key": "showRowNumbers",
-          "type": "boolean",
-          "hint": "Toggle the visibility of row numbers",
-          "default": false
         }
       ]
     }
@@ -103,49 +94,39 @@
       },
       "queryRole": "row",
       "minCount": 1,
-      "maxCount": 1
+      "maxCount": 2
     },
     {
       "key": "tray-key",
       "name": {
-        "key": "Measures"
+        "key": "measures"
       },
       "queryRole": "measure",
       "settings": [
         {
-          "name": {
-            "key": "Number Format"
-          },
+          "name": "Number Format",
           "settings": [
             {
-              "name": {
-                "key": "Scale"
-              },
+              "name": "Scale",
               "key": "scale1",
               "type": "scale"
             },
             {
-              "name": {
-                "key": "Format"
-              },
+              "name": "Format",
               "key": "format",
               "type": "number-format",
-              "default": "###,###"
+              "defaultValue": "###,###"
             },
             {
-              "name": {
-                "key": "Color"
-              },
+              "name": "Color",
               "key": "color",
               "type": "color"
             },
             {
-              "name": {
-                "key": "Transparency"
-              },
+              "name": "Transparency",
               "key": "transparency",
               "type": "number",
-              "default": 70
+              "defaultValue": 70
             }
           ]
         }
