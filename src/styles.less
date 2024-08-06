@@ -1,34 +1,30 @@
 @headerColor: #f2f2f2; // Default header color
 @rowColor: #ffffff; // Default row color
+@tableBorderRadius: 1px; // Default table border radius
+@tableBorderColor: #A9A9A9; // Default table border color
+@barRounding: 30px; // Default bar rounding
 
 .advanced-table {
+  overflow: hidden;
+  border-radius: @tableBorderRadius;
+  border: 2px solid @tableBorderColor;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+
   table {
+    border-collapse: separate;
+    border-spacing: 0; 
     width: 100%;
-    border-collapse: collapse;
+    border-radius: @tableBorderRadius;
+    overflow: hidden; 
 
     th, td {
-      border: 1px solid #ccc;
+      border: 2px solid @tableBorderColor;
+      position: relative;
       padding: 8px;
       text-align: left;
-
-      &.sorted {
-        color: green;
-      }
-
-      .resize-handle {
-        display: inline-block;
-        width: 5px;
-        height: 100%;
-        cursor: col-resize;
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-      }
-
-      .chart-cell {
-        position: relative;
-      }
+      background-clip: padding-box; // Ensure the background is clipped to the padding box
     }
 
     th {
@@ -39,79 +35,165 @@
       background-color: @rowColor;
     }
 
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-
-      .modal-content {
-        background-color: white;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        position: relative;
-
-        .button-group {
-          display: flex;
-          justify-content: center;
-          margin-top: 10px;
-
-          button {
-            border: none;
-            border-radius: 20px;
-            padding: 10px 20px;
-            cursor: pointer;
-
-            &.yes {
-              background-color: blue;
-              color: white;
-              margin-right: 10px;
-              width: 150px;
-            }
-
-            &.cancel {
-              background-color: grey;
-              color: black;
-              width: 100px;
-            }
-          }
-        }
-      }
+    // Ensure rounded corners for the table
+    tr:first-child th:first-child { 
+      border-top-left-radius: @tableBorderRadius;
     }
 
-    .hover-chart,
-    .persistent-chart {
-      position: fixed;
-      transform: translateY(-50%);
-      width: 400px;
-      height: 200px;
-      background-color: white;
-      border: 2px solid #A9A9A9;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      padding: 20px;
+    tr:first-child th:last-child { 
+      border-top-right-radius: @tableBorderRadius;
     }
 
-    .persistent-chart {
-      button.close {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background-color: red;
+    tr:last-child td:first-child { 
+      border-bottom-left-radius: @tableBorderRadius;
+    }
+
+    tr:last-child td:last-child { 
+      border-bottom-right-radius: @tableBorderRadius;
+    }
+  }
+
+  .resizer {
+    display: inline-block;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }
+
+  .chart-cell {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    position: relative;
+  }
+
+  .modal-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+
+    button {
+      border: none;
+      border-radius: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+
+      &.confirm {
+        background-color: blue;
         color: white;
-        border: none;
-        border-radius: 20px;
-        padding: 5px 10px;
-        cursor: pointer;
+        margin-right: 10px;
+        width: 150px;
       }
+
+      &.cancel {
+        background-color: grey;
+        color: black;
+        width: 100px;
+      }
+    }
+  }
+}
+
+.sort-modal {
+  position: absolute;
+  background-color: white;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+
+  button {
+    display: block;
+    background-color: darkgrey;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+}
+
+.chart-popup {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 400px;
+  height: 200px;
+  background-color: white;
+  border: 2px solid @tableBorderColor;
+  border-radius: @tableBorderRadius;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  padding: 20px;
+
+  .close-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+}
+
+.bar-chart {
+  width: 100%;
+  display: flex;
+  align-items: center;
+
+  .positive-bar {
+    flex: 1;
+    height: 20px;
+    position: relative;
+
+    .positive-bar-inner {
+      height: 20px;
+      background-color: green;
+      position: absolute;
+      left: 0;
+      border-radius: @barRounding;
+    }
+  }
+
+  .negative-bar {
+    flex: 1;
+    height: 20px;
+    position: relative;
+
+    .negative-bar-inner {
+      height: 20px;
+      background-color: red;
+      position: absolute;
+      right: 0;
+      border-radius: @barRounding;
     }
   }
 }
