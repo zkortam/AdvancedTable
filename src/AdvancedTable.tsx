@@ -10,7 +10,8 @@ import { Sparklines, SparklinesLine } from 'react-sparklines';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './styles.less';
-import { formatNumber, handleMouseDown, handleSortClick, handleSort } from './utils'; // Import the functions
+import { formatNumber, handleMouseDown, handleSortClick, handleSort, initializeState } from './utils'; // Import the functions
+import ModalComponent from './ModalComponent';
 
 interface Props {
   context: Context<TContext>;
@@ -33,7 +34,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     tableBorderColor: "#A9A9A9",
     alternatingRowColors: true,
     columnWidths: [] as number[],
-    tableBorderRadius: 0,
+    tableBorderRadius: 10, // Ensure this matches the @tableBorderRadius variable in the LESS file
     showValueColumns: true,
     showBarCharts: true,
     showLineCharts: true,
@@ -49,47 +50,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (data && data.colHeaders?.[0]?.label) {
-      setColumnLabel(data.colHeaders[0].label);
-    }
-
-    const dimensionLabels = data.data.map(row => row[0]?.value || "");
-    setGroupLabels(dimensionLabels);
-
-    const numberOfLists = Math.min(data.measureHeaders.length, 50);
-    const initialLists: number[][] = Array.from({ length: numberOfLists }, (_, i) =>
-      data.data.map(row => Number(row[i + 1]?.value || 0))
-    );
-
-    setLists(initialLists.map(list => list.slice(0, 50)));
-
-    const headers = data.measureHeaders.map(header => {
-      const parts = header.label.split('.');
-      return parts[parts.length - 1] || "Data";
-    });
-    setTitles(headers.slice(0, 50));
-
-    const maxValues = initialLists.map(list => Math.max(...list.map(Math.abs)));
-    setMaxValues(maxValues);
-
-    if (data && data.measureHeaders?.[0]?.label) {
-      setValueLabel(data.measureHeaders[0].label);
-    }
-
-    if (settings) {
-      setTableSettings({
-        barRounding: settings.barRounding ?? 30,
-        tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
-        alternatingRowColors: settings.alternatingRowColors ?? true,
-        columnWidths: [150, ...Array(numberOfLists * 3).fill(100)],
-        tableBorderRadius: settings.tableBorderRadius ?? 0,
-        showValueColumns: settings.showValueColumns ?? true,
-        showBarCharts: settings.showBarCharts ?? true,
-        showLineCharts: settings.showLineCharts ?? true,
-        showRowNumbers: settings.showRowNumbers ?? false
-      });
-    }
-
+    initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setMaxValues, setValueLabel, setTableSettings);
   }, [data, settings]);
 
   const renderChartCell = (value: number, maxValue: number) => {
@@ -102,10 +63,10 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         {tableSettings.showBarCharts && (
           <>
             <div className="positive-bar">
-              <div className="positive-bar-inner" style={{ width: `${positiveWidth}%` }}></div>
+              <div className="positive-bar-inner" style={{ width: `${positiveWidth}%`, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
             <div className="negative-bar">
-              <div className="negative-bar-inner" style={{ width: `${negativeWidth}%` }}></div>
+              <div className="negative-bar-inner" style={{ width: `${negativeWidth}%`, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
           </>
         )}
@@ -173,21 +134,14 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     const profits = stateData.map(row => Number(row[2]?.value || 0)); // Assuming profit is in the third column
     return { timestamps, profits };
   };
-  
 
   return (
-    <div className="advanced-table">
-      {isModalOpen && (
-        <div className="modal" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <p>Would you like to reset the table?</p>
-            <div className="modal-buttons">
-              <button onClick={handleResetTable} className="confirm">Yes</button>
-              <button onClick={() => setIsModalOpen(false)} className="cancel">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, border: `2px solid ${tableSettings.tableBorderColor}` }}>
+      <ModalComponent
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleResetTable}
+      />
       {sortModalOpen.open && (
         <div className="sort-modal" style={{ top: sortModalOpen.top || 0, left: sortModalOpen.left || 0 }} onClick={() => setSortModalOpen({ open: false, index: null, top: null, left: null })}>
           <div onClick={(e) => e.stopPropagation()}>
@@ -292,40 +246,91 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         <table
           ref={tableRef}
           onContextMenu={handleTableRightClick}
+          style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px` }}
         >
           <thead>
             <tr>
               {tableSettings.showRowNumbers && (
-                <th style={{ width: '50px' }}>
+                <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px', position: 'relative' }}>
                   #
                 </th>
               )}
-              <th style={{ width: `${tableSettings.columnWidths[0]}px` }} onContextMenu={(e) => handleSortClick(e, 0, sortModalOpen, setSortModalOpen)}>
+              <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px`, position: 'relative' }}
+                onContextMenu={(e) => handleSortClick(e, 0, sortModalOpen, setSortModalOpen)}>
                 {columnLabel}
-                <div className="resizer" onMouseDown={(e) => handleMouseDown(e, 0, tableSettings.columnWidths[0], tableSettings.columnWidths, setTableSettings)} />
+                <div
+                  style={{
+                    display: 'inline-block',
+                    width: '5px',
+                    height: '100%',
+                    cursor: 'col-resize',
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, 0, tableSettings.columnWidths[0], tableSettings.columnWidths, setTableSettings)}
+                />
               </th>
               {titles.map((title, index) => (
                 <React.Fragment key={index}>
                   {tableSettings.showValueColumns && (
-                    <th style={{ width: `${tableSettings.columnWidths[index * 3 + 1]}px`, color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }} onContextMenu={(e) => handleSortClick(e, index * 3 + 1, sortModalOpen, setSortModalOpen)}>
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 1]}px`, position: 'relative', color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }}
+                      onContextMenu={(e) => handleSortClick(e, index * 3 + 1, sortModalOpen, setSortModalOpen)}>
                       {title} Value
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 1, tableSettings.columnWidths[index * 3 + 1], tableSettings.columnWidths, setTableSettings)} />
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          width: '5px',
+                          height: '100%',
+                          cursor: 'col-resize',
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                        }}
+                        onMouseDown={(e) => handleMouseDown(e, index * 3 + 1, tableSettings.columnWidths[index * 3 + 1], tableSettings.columnWidths, setTableSettings)}
+                      />
                     </th>
                   )}
                   {tableSettings.showBarCharts && (
-                    <th style={{ width: `${tableSettings.columnWidths[index * 3 + 2]}px` }}>
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
                       {title} Chart
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 2, tableSettings.columnWidths[index * 3 + 2], tableSettings.columnWidths, setTableSettings)} />
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          width: '5px',
+                          height: '100%',
+                          cursor: 'col-resize',
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                        }}
+                        onMouseDown={(e) => handleMouseDown(e, index * 3 + 2, tableSettings.columnWidths[index * 3 + 2], tableSettings.columnWidths, setTableSettings)}
+                      />
                     </th>
                   )}
                   {tableSettings.showLineCharts && (
-                    <th className="chart-cell" style={{ width: `${tableSettings.columnWidths[index * 3 + 3]}px` }}
+                    <th className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 3]}px`, position: 'relative' }}
                       onMouseEnter={(e) => handleSparklineHover(lists[index].slice(0, index + 1), index, `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}
                       onMouseMove={(e) => handleSparklineMove(lists[index].slice(0, index + 1), index, `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}
                       onMouseLeave={handleSparklineLeave}
                       onContextMenu={(e) => handleSparklineRightClick(e, lists[index].slice(0, index + 1), `${groupLabels[index]} ${titles[index]}`, e.currentTarget.getBoundingClientRect().left)}>
                       {title} Sparkline
-                      <div className="resizer" onMouseDown={(e) => handleMouseDown(e, index * 3 + 3, tableSettings.columnWidths[index * 3 + 3], tableSettings.columnWidths, setTableSettings)} />
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          width: '5px',
+                          height: '100%',
+                          cursor: 'col-resize',
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                        }}
+                        onMouseDown={(e) => handleMouseDown(e, index * 3 + 3, tableSettings.columnWidths[index * 3 + 3], tableSettings.columnWidths, setTableSettings)}
+                      />
                     </th>
                   )}
                 </React.Fragment>
@@ -336,23 +341,23 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
             {groupLabels.map((label, rowIndex) => (
               <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
                 {tableSettings.showRowNumbers && (
-                  <td style={{ width: '50px' }}>{rowIndex + 1}</td>
+                  <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
                 )}
-                <td style={{ width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
+                <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
                 {lists.map((list, colIndex) => (
                   <React.Fragment key={colIndex}>
                     {tableSettings.showValueColumns && (
-                      <td style={{ width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
                         {typeof list[rowIndex] === 'number' ? formatNumber(list[rowIndex]) : list[rowIndex]}
                       </td>
                     )}
                     {tableSettings.showBarCharts && (
-                      <td style={{ width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px` }}>
+                      <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px` }}>
                         {renderChartCell(list[rowIndex], maxValues[colIndex])}
                       </td>
                     )}
                     {tableSettings.showLineCharts && (
-                      <td className="chart-cell" style={{ width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
+                      <td className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
                         onMouseEnter={(e) => handleSparklineHover(list.slice(0, rowIndex + 1), colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
                         onMouseMove={(e) => handleSparklineMove(list.slice(0, rowIndex + 1), colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
                         onMouseLeave={handleSparklineLeave}
