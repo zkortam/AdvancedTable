@@ -1,4 +1,5 @@
 // utils.ts
+import { ResponseData } from '@incorta-org/component-sdk';
 import React from 'react';
 
 export const formatNumber = (num: number): string => {
@@ -119,4 +120,57 @@ export const handleSort = (
   }
 
   setSortModalOpen({ open: false, index: null, top: null, left: null });
+};
+
+export const initializeState = (
+  data: ResponseData,
+  settings: any,
+  setColumnLabel: React.Dispatch<React.SetStateAction<string>>,
+  setGroupLabels: React.Dispatch<React.SetStateAction<(string | number)[]>>,
+  setLists: React.Dispatch<React.SetStateAction<number[][]>>,
+  setTitles: React.Dispatch<React.SetStateAction<string[]>>,
+  setMaxValues: React.Dispatch<React.SetStateAction<number[]>>,
+  setValueLabel: React.Dispatch<React.SetStateAction<string>>,
+  setTableSettings: React.Dispatch<React.SetStateAction<any>>
+) => {
+  if (data && data.colHeaders?.[0]?.label) {
+    setColumnLabel(data.colHeaders[0].label);
+  }
+
+  const dimensionLabels = data.data.map(row => row[0]?.value || "");
+  setGroupLabels(dimensionLabels);
+
+  const numberOfLists = Math.min(data.measureHeaders.length, 50);
+  const initialLists: number[][] = Array.from({ length: numberOfLists }, (_, i) =>
+    data.data.map(row => Number(row[i + 1]?.value || 0))
+  );
+
+  setLists(initialLists.map(list => list.slice(0, 50)));
+
+  const headers = data.measureHeaders.map(header => {
+    const parts = header.label.split('.');
+    return parts[parts.length - 1] || "Data";
+  });
+  setTitles(headers.slice(0, 50));
+
+  const maxValues = initialLists.map(list => Math.max(...list.map(Math.abs)));
+  setMaxValues(maxValues);
+
+  if (data && data.measureHeaders?.[0]?.label) {
+    setValueLabel(data.measureHeaders[0].label);
+  }
+
+  if (settings) {
+    setTableSettings({
+      barRounding: settings.barRounding ?? 30,
+      tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
+      alternatingRowColors: settings.alternatingRowColors ?? true,
+      columnWidths: [150, ...Array(numberOfLists * 3).fill(100)],
+      tableBorderRadius: settings.tableBorderRadius ?? 0,
+      showValueColumns: settings.showValueColumns ?? true,
+      showBarCharts: settings.showBarCharts ?? true,
+      showLineCharts: settings.showLineCharts ?? true,
+      showRowNumbers: settings.showRowNumbers ?? false
+    });
+  }
 };
