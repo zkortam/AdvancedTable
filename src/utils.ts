@@ -137,13 +137,11 @@ export const initializeState = (
       setColumnLabel(data.colHeaders[0].label);
     }
   
-    // Extract unique state labels
     const stateLabels = Array.from(new Set(data.data.map(row => row[0]?.value)));
     setGroupLabels(stateLabels);
   
     const numberOfLists = Math.min(data.measureHeaders.length, 50);
   
-    // Initialize lists for each state with time-series data
     const initialLists: number[][][] = stateLabels.map(state => {
       const filteredRows = data.data.filter(row => row[0]?.value === state);
       return Array.from({ length: numberOfLists }, (_, i) => {
@@ -152,7 +150,6 @@ export const initializeState = (
       });
     });
   
-    // Initialize dates for each state
     const initialDates: string[][] = stateLabels.map(state => {
       const filteredRows = data.data.filter(row => row[0]?.value === state);
       return filteredRows.map(row => row[1]?.value || "").slice(0, 500);
@@ -161,14 +158,12 @@ export const initializeState = (
     setLists(initialLists);
     setDates(initialDates);
   
-    // Extract titles from measure headers
     const headers = data.measureHeaders.map(header => {
       const parts = header.label.split('.');
       return parts[parts.length - 1] || "Data";
     });
     setTitles(headers.slice(0, 50));
   
-    // Calculate max values for each measure column for chart scaling
     const maxValues = initialLists[0].map((_, i) => Math.max(...initialLists.map(row => Math.max(...row[i].map(Math.abs)))));
     setMaxValues(maxValues);
   
@@ -189,6 +184,4 @@ export const initializeState = (
         showRowNumbers: settings.showRowNumbers ?? false
       });
     }
-  };
-  
-  
+  }
