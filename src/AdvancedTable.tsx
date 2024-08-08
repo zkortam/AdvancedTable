@@ -40,12 +40,10 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     alternatingRowColors: true,
     columnWidths: [] as number[],
     tableBorderRadius: 10,
-    tableBorderWidth: 2,
     showValueColumns: true,
     showBarCharts: true,
     showLineCharts: true,
-    showRowNumbers: false,
-    datePart: 'Month'
+    showRowNumbers: false
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [sortModalOpen, setSortModalOpen] = useState<{ open: boolean, index: number | null, top: number | null, left: number | null }>({ open: false, index: null, top: null, left: null });
@@ -58,36 +56,22 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
 
   useEffect(() => {
     initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setMaxValues, setValueLabel, setTableSettings, setDates);
-    console.log("State initialized:", { lists, groupLabels, titles, maxValues, dates });
   }, [data, settings]);
-
-  useEffect(() => {
-    console.log("Table settings updated:", tableSettings);
-  }, [tableSettings]);
-
-  // Add a new useEffect to handle date part changes
-  useEffect(() => {
-    if (tableSettings.datePart) {
-      // Trigger a refresh or re-fetch of data based on the selected date part
-      initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setMaxValues, setValueLabel, setTableSettings, setDates);
-      console.log("Date part changed, state re-initialized:", { lists, groupLabels, titles, maxValues, dates });
-    }
-  }, [tableSettings.datePart]);
 
   const renderChartCell = (value: number, maxValue: number) => {
     const percentage = (Math.abs(value) / maxValue) * 100;
     const positiveWidth = value > 0 ? percentage : 0;
     const negativeWidth = value < 0 ? percentage : 0;
-
+  
     return (
       <div className="bar-chart-container">
         {tableSettings.showBarCharts && (
           <>
             <div className="positive-bar">
-              <div className="positive-bar-inner" style={{ width: `calc(${positiveWidth}% - 10px)`, borderRadius: `${tableSettings.barRounding}px`, marginLeft: '5px', marginRight: '5px' }}></div>
+              <div className="positive-bar-inner" style={{ width: `${positiveWidth}%`, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
             <div className="negative-bar">
-              <div className="negative-bar-inner" style={{ width: `calc(${negativeWidth}% - 10px)`, borderRadius: `${tableSettings.barRounding}px`, marginLeft: '5px', marginRight: '5px' }}></div>
+              <div className="negative-bar-inner" style={{ width: `${negativeWidth}%`, borderRadius: `${tableSettings.barRounding}px` }}></div>
             </div>
           </>
         )}
@@ -149,12 +133,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     setPersistentChart({ data: [], show: false, label: '', column: null, cellLeft: null, dates: [] });
   };
 
-  const handleDatePartChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTableSettings({ ...tableSettings, datePart: e.target.value });
-  };
-
   return (
-    <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}` }}>
+    <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, border: `2px solid ${tableSettings.tableBorderColor}` }}>
       <ModalComponent
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -316,16 +296,16 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         <table
           ref={tableRef}
           onContextMenu={handleTableRightClick}
-          style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px` }}
+          style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px` }}
         >
           <thead>
             <tr>
               {tableSettings.showRowNumbers && (
-                <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: '50px', position: 'relative' }}>
+                <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px', position: 'relative' }}>
                   #
                 </th>
               )}
-              <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px`, position: 'relative' }}
+              <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px`, position: 'relative' }}
                 onContextMenu={(e) => handleSortClick(e, 0, sortModalOpen, setSortModalOpen)}>
                 {columnLabel}
                 <div
@@ -345,7 +325,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
               {titles.map((title, index) => (
                 <React.Fragment key={index}>
                   {tableSettings.showValueColumns && (
-                    <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 1]}px`, position: 'relative', color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }}
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 1]}px`, position: 'relative', color: (sortedData.index === index * 3 + 1) ? 'green' : 'inherit' }}
                       onContextMenu={(e) => handleSortClick(e, index * 3 + 1, sortModalOpen, setSortModalOpen)}>
                       {title} Value
                       <div
@@ -364,7 +344,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                     </th>
                   )}
                   {tableSettings.showBarCharts && (
-                    <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
+                    <th style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
                       {title} Chart
                       <div
                         style={{
@@ -382,7 +362,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                     </th>
                   )}
                   {tableSettings.showLineCharts && (
-                    <th className="chart-cell" style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 3]}px`, position: 'relative' }}>
+                    <th className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 3]}px`, position: 'relative' }}>
                       {title} Sparkline
                       <div
                         style={{
@@ -406,39 +386,39 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           <tbody>
             {groupLabels.map((label, rowIndex) => (
               <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
-                {tableSettings.showRowNumbers && (
-                  <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
-                )}
-                <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
-                {lists[rowIndex].map((values, colIndex) => (
-                  <React.Fragment key={colIndex}>
-                    {tableSettings.showValueColumns && (
-                      <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
-                        {typeof values[0] === 'number' ? formatNumber(values.reduce((a, b) => a + b, 0)) : values[0]}
-                      </td>
-                    )}
-                    {tableSettings.showBarCharts && (
-                      <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
-                        <div className="chart-container">
-                          {renderChartCell(values.reduce((a, b) => a + b, 0), maxValues[colIndex])}
-                        </div>
-                      </td>
-                    )}
-                    {tableSettings.showLineCharts && (
-                      <td className="chart-cell" style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
-                          onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
-                          onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
-                          onMouseLeave={handleSparklineLeave}
-                          onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}>
-                        <Sparklines data={values} limit={100} width={tableSettings.columnWidths[colIndex * 3 + 3] - 20} height={20}>
-                          <SparklinesLine style={{ stroke: "blue", fill: "none" }} />
-                        </Sparklines>
-                      </td>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tr>
-            ))}
+              {tableSettings.showRowNumbers && (
+                <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
+              )}
+              <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
+              {lists[rowIndex].map((values, colIndex) => (
+                <React.Fragment key={colIndex}>
+                  {tableSettings.showValueColumns && (
+                    <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
+                      {typeof values[0] === 'number' ? formatNumber(values.reduce((a, b) => a + b, 0)) : values[0]}
+                    </td>
+                  )}
+                  {tableSettings.showBarCharts && (
+                    <td style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
+                      <div className="chart-container">
+                        {renderChartCell(values.reduce((a, b) => a + b, 0), maxValues[colIndex])}
+                      </div>
+                    </td>
+                  )}
+                  {tableSettings.showLineCharts && (
+                    <td className="chart-cell" style={{ border: `2px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px` }}
+                        onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
+                        onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}
+                        onMouseLeave={handleSparklineLeave}
+                        onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left)}>
+                      <Sparklines data={values} limit={100} width={100} height={20}>
+                        <SparklinesLine style={{ stroke: "blue", fill: "none" }} />
+                      </Sparklines>
+                    </td>
+                  )}
+                </React.Fragment>
+              ))}
+            </tr>
+          ))}
           </tbody>
         </table>
       </div>
