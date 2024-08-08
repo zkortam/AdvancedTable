@@ -63,7 +63,7 @@
           "key": "showBarCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of bar charts",
-          "default": true
+          "default": false
         },
         {
           "name": {
@@ -72,7 +72,7 @@
           "key": "showLineCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of line charts",
-          "default": true
+          "default": false
         },
         {
           "name": {
@@ -81,49 +81,77 @@
           "key": "alternatingRowColors",
           "type": "boolean",
           "hint": "Toggle alternating row colors",
-          "default": true
+          "default": false
+        },
+        {
+          "name": {
+            "key": "Show Row Numbers"
+          },
+          "key": "showRowNumbers",
+          "type": "boolean",
+          "hint": "Toggle the visibility of row numbers",
+          "default": false
         }
       ]
     }
   ],
   "bindingsTrays": [
     {
-      "key": "tray-key-dim",
+      "key": "tray-key-dim-1",
       "name": {
-        "key": "BreakBy"
+        "key": "BreakBy (First Value)"
       },
       "queryRole": "row",
       "minCount": 1,
-      "maxCount": 2
+      "maxCount": 1
+    },
+    {
+      "key": "tray-key-dim-2",
+      "name": {
+        "key": "BreakBy (Time)"
+      },
+      "queryRole": "row",
+      "minCount": 1,
+      "maxCount": 1
     },
     {
       "key": "tray-key",
       "name": {
-        "key": "measures"
+        "key": "Measures"
       },
       "queryRole": "measure",
       "settings": [
         {
-          "name": "Number Format",
+          "name": {
+            "key": "Number Format"
+          },
           "settings": [
             {
-              "name": "Scale",
+              "name": {
+                "key": "Scale"
+              },
               "key": "scale1",
               "type": "scale"
             },
             {
-              "name": "Format",
+              "name": {
+                "key": "Format"
+              },
               "key": "format",
               "type": "number-format",
               "defaultValue": "###,###"
             },
             {
-              "name": "Color",
+              "name": {
+                "key": "Color"
+              },
               "key": "color",
               "type": "color"
             },
             {
-              "name": "Transparency",
+              "name": {
+                "key": "Transparency"
+              },
               "key": "transparency",
               "type": "number",
               "defaultValue": 70
