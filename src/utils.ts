@@ -18,13 +18,21 @@ export const formatNumber = (num: number): string => {
   return formattedNum.replace(/(\.0+|0+)$/, ''); // Remove unnecessary trailing zeros
 };
 
-export const handleMouseDown = (
-  e: React.MouseEvent,
-  index: number,
-  startWidth: number,
-  columnWidths: number[],
-  setTableSettings: React.Dispatch<React.SetStateAction<any>>
-) => {
+interface HandleMouseDownProps {
+  e: React.MouseEvent;
+  index: number;
+  startWidth: number;
+  columnWidths: number[];
+  setTableSettings: React.Dispatch<React.SetStateAction<any>>;
+}
+
+export const handleMouseDown = ({
+  e,
+  index,
+  startWidth,
+  columnWidths,
+  setTableSettings
+}: HandleMouseDownProps) => {
   e.preventDefault();
   const startX = e.clientX;
 
@@ -122,66 +130,74 @@ export const handleSort = (
 };
 
 export const initializeState = (
-    data: ResponseData,
-    settings: any,
-    setColumnLabel: React.Dispatch<React.SetStateAction<string>>,
-    setGroupLabels: React.Dispatch<React.SetStateAction<(string | number)[]>>,
-    setLists: React.Dispatch<React.SetStateAction<number[][][]>>,
-    setTitles: React.Dispatch<React.SetStateAction<string[]>>,
-    setMaxValues: React.Dispatch<React.SetStateAction<number[]>>,
-    setValueLabel: React.Dispatch<React.SetStateAction<string>>,
-    setTableSettings: React.Dispatch<React.SetStateAction<any>>,
-    setDates: React.Dispatch<React.SetStateAction<string[][]>>
-  ) => {
-    if (data && data.colHeaders?.[0]?.label) {
-      setColumnLabel(data.colHeaders[0].label);
-    }
-  
-    const stateLabels = Array.from(new Set(data.data.map(row => row[0]?.value)));
-    setGroupLabels(stateLabels);
-  
-    const numberOfLists = Math.min(data.measureHeaders.length, 50);
-  
-    const initialLists: number[][][] = stateLabels.map(state => {
-      const filteredRows = data.data.filter(row => row[0]?.value === state);
-      return Array.from({ length: numberOfLists }, (_, i) => {
-        const values = filteredRows.map(row => Number(row[i + 2]?.value || 0));
-        return values.slice(0, 500); // Limit to 500 data points
-      });
-    });
-  
-    const initialDates: string[][] = stateLabels.map(state => {
-      const filteredRows = data.data.filter(row => row[0]?.value === state);
-      return filteredRows.map(row => row[1]?.value || "").slice(0, 500);
-    });
-  
-    setLists(initialLists);
-    setDates(initialDates);
-  
-    const headers = data.measureHeaders.map(header => {
-      const parts = header.label.split('.');
-      return parts[parts.length - 1] || "Data";
-    });
-    setTitles(headers.slice(0, 50));
-  
-    const maxValues = initialLists[0].map((_, i) => Math.max(...initialLists.map(row => Math.max(...row[i].map(Math.abs)))));
-    setMaxValues(maxValues);
-  
-    if (data && data.measureHeaders?.[0]?.label) {
-      setValueLabel(data.measureHeaders[0].label);
-    }
-  
-    if (settings) {
-      setTableSettings({
-        barRounding: settings.barRounding ?? 30,
-        tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
-        alternatingRowColors: settings.alternatingRowColors ?? true,
-        columnWidths: [150, ...Array(numberOfLists * 3).fill(100)],
-        tableBorderRadius: settings.tableBorderRadius ?? 0,
-        showValueColumns: settings.showValueColumns ?? true,
-        showBarCharts: settings.showBarCharts ?? true,
-        showLineCharts: settings.showLineCharts ?? true,
-        showRowNumbers: settings.showRowNumbers ?? false
-      });
-    }
+  data: ResponseData,
+  settings: any,
+  setColumnLabel: React.Dispatch<React.SetStateAction<string>>,
+  setGroupLabels: React.Dispatch<React.SetStateAction<(string | number)[]>>,
+  setLists: React.Dispatch<React.SetStateAction<number[][][]>>,
+  setTitles: React.Dispatch<React.SetStateAction<string[]>>,
+  setMaxValues: React.Dispatch<React.SetStateAction<number[]>>,
+  setValueLabel: React.Dispatch<React.SetStateAction<string>>,
+  setTableSettings: React.Dispatch<React.SetStateAction<any>>,
+  setDates: React.Dispatch<React.SetStateAction<string[][]>>
+) => {
+  if (data && data.colHeaders?.[0]?.label) {
+    setColumnLabel(data.colHeaders[0].label);
   }
+
+  // Ensure a default date part is selected
+  const defaultDatePart = settings?.defaultDatePart || 'Month'; // Set your preferred default
+
+  const stateLabels = Array.from(new Set(data.data.map(row => row[0]?.value)));
+  setGroupLabels(stateLabels);
+
+  const numberOfLists = Math.min(data.measureHeaders.length, 50);
+
+  const initialLists: number[][][] = stateLabels.map(state => {
+    const filteredRows = data.data.filter(row => row[0]?.value === state);
+    return Array.from({ length: numberOfLists }, (_, i) => {
+      const values = filteredRows.map(row => Number(row[i + 2]?.value || 0));
+      return values.slice(0, 500); // Limit to 500 data points
+    });
+  });
+
+  const initialDates: string[][] = stateLabels.map(state => {
+    const filteredRows = data.data.filter(row => row[0]?.value === state);
+    return filteredRows.map(row => row[1]?.value || "").slice(0, 500);
+  });
+
+  setLists(initialLists);
+  setDates(initialDates);
+
+  const headers = data.measureHeaders.map(header => {
+    const parts = header.label.split('.');
+    return parts[parts.length - 1] || "Data";
+  });
+  setTitles(headers.slice(0, 50));
+
+  const maxValues = initialLists[0].map((_, i) => Math.max(...initialLists.map(row => Math.max(...row[i].map(Math.abs)))));
+  setMaxValues(maxValues);
+
+  if (data && data.measureHeaders?.[0]?.label) {
+    setValueLabel(data.measureHeaders[0].label);
+  }
+
+  if (settings) {
+    setTableSettings({
+      barRounding: settings.barRounding ?? 30,
+      tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
+      alternatingRowColors: settings.alternatingRowColors ?? true,
+      columnWidths: [150, ...Array(numberOfLists * 3).fill(100)],
+      tableBorderRadius: settings.tableBorderRadius ?? 0,
+      showValueColumns: settings.showValueColumns ?? true,
+      showBarCharts: settings.showBarCharts ?? true,
+      showLineCharts: settings.showLineCharts ?? true,
+      showRowNumbers: settings.showRowNumbers ?? false,
+      tableBorderWidth: settings.tableBorderWidth ?? 2, // Ensure to set the default border width
+      barHeight: settings.barHeight ?? 20, // Ensure to set the default bar height
+      barColor: settings.barColor ?? "green", // Ensure to set the default bar color
+      negativeBarColor: settings.negativeBarColor ?? "red", // Ensure to set the default negative bar color
+      datePart: defaultDatePart // Add the default date part here
+    });
+  }
+};
