@@ -28,7 +28,7 @@
           "key": "barRounding",
           "type": "number",
           "hint": "Select the rounding radius for the bar (px)",
-          "default": 30
+          "default": 1
         },
         {
           "name": {
@@ -46,6 +46,42 @@
           "key": "tableBorderColor",
           "type": "color",
           "hint": "Select the border color for the table"
+        },
+        {
+          "name": {
+            "key": "Table Border Thickness"
+          },
+          "key": "tableBorderWidth",
+          "type": "number",
+          "hint": "Select the border thickness for the table (px)",
+          "default": 2
+        },
+        {
+          "name": {
+            "key": "Positive Bar Color"
+          },
+          "key": "positiveBarColor",
+          "type": "color",
+          "hint": "Select the color for positive bar values",
+          "default": "#00FF00"
+        },
+        {
+          "name": {
+            "key": "Negative Bar Color"
+          },
+          "key": "negativeBarColor",
+          "type": "color",
+          "hint": "Select the color for negative bar values",
+          "default": "#FF0000"
+        },
+        {
+          "name": {
+            "key": "Sparkline Color"
+          },
+          "key": "sparklineColor",
+          "type": "color",
+          "hint": "Select the color for sparklines",
+          "default": "blue"
         },
         {
           "name": {
@@ -81,7 +117,7 @@
           "key": "alternatingRowColors",
           "type": "boolean",
           "hint": "Toggle alternating row colors",
-          "default": true
+          "default": false
         },
         {
           "name": {
@@ -97,9 +133,18 @@
   ],
   "bindingsTrays": [
     {
-      "key": "tray-key-dim",
+      "key": "tray-key-dim-1",
       "name": {
-        "key": "BreakBy"
+        "key": "BreakBy (First Value)"
+      },
+      "queryRole": "row",
+      "minCount": 1,
+      "maxCount": 1
+    },
+    {
+      "key": "tray-key-dim-2",
+      "name": {
+        "key": "BreakBy (Time)"
       },
       "queryRole": "row",
       "minCount": 1,
@@ -130,7 +175,7 @@
               },
               "key": "format",
               "type": "number-format",
-              "default": "###,###"
+              "defaultValue": "###,###"
             },
             {
               "name": {
@@ -145,7 +190,7 @@
               },
               "key": "transparency",
               "type": "number",
-              "default": 70
+              "defaultValue": 70
             }
           ]
         }
