@@ -1,4 +1,4 @@
-import { ResponseData } from '@incorta-org/component-sdk';
+import { ResponseData, Context as IncortaContext, TContext as IncortaTContext } from '@incorta-org/component-sdk';
 import React from 'react';
 
 export const formatNumber = (num: number): string => {
@@ -55,6 +55,18 @@ export const handleMouseDown = ({
   document.addEventListener('mouseup', handleMouseUp);
 };
 
+interface Condition {
+  value: string;
+  op: string;
+  color: string;
+}
+
+interface Binding {
+  settings: {
+    conditions: Condition[];
+  };
+}
+
 export const initializeState = (
   data: ResponseData,
   settings: any,
@@ -64,14 +76,14 @@ export const initializeState = (
   setTitles: React.Dispatch<React.SetStateAction<string[]>>,
   setValueLabel: React.Dispatch<React.SetStateAction<string>>,
   setTableSettings: React.Dispatch<React.SetStateAction<any>>,
-  setDates: React.Dispatch<React.SetStateAction<string[][]>>
-) => {
+  setDates: React.Dispatch<React.SetStateAction<string[][]>>,
+  context: IncortaContext<IncortaTContext>
+): { initialLists: number[][][], initialGroupLabels: (string | number)[] } => {
   if (data && data.colHeaders?.[0]?.label) {
     setColumnLabel(data.colHeaders[0].label);
   }
 
-  // Ensure a default date part is selected
-  const defaultDatePart = settings?.defaultDatePart || 'Month'; // Set your preferred default
+  const defaultDatePart = settings?.defaultDatePart || 'Month';
 
   const stateLabels = Array.from(new Set(data.data.map(row => row[0]?.value)));
   setGroupLabels(stateLabels);
@@ -107,23 +119,67 @@ export const initializeState = (
   if (settings) {
     setTableSettings({
       tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
-      alternatingRowColors: settings.alternatingRowColors ?? true,
-      columnWidths: [150, ...Array(numberOfLists * 3).fill(200)], // Adjusted for new bar chart columns with 200px width
+      alternatingRowColors: settings.alternatingRowColors ?? false,
+      columnWidths: [150, ...Array(numberOfLists * 3).fill(200)],
       tableBorderRadius: settings.tableBorderRadius ?? 0,
       showValueColumns: settings.showValueColumns ?? true,
-      showLineCharts: settings.showLineCharts ?? true,
-      showBarCharts: settings.showBarCharts ?? true, // Ensure bar charts are shown
+      showLineCharts: settings.showLineCharts ?? false,
+      showBarCharts: settings.showBarCharts ?? false,
       showRowNumbers: settings.showRowNumbers ?? false,
-      tableBorderWidth: settings.tableBorderWidth ?? 2, // Ensure to set the default border width
-      datePart: defaultDatePart, // Add the default date part here
-      positiveBarColor: settings.positiveBarColor ?? '#62BB9A', // Default green
-      negativeBarColor: settings.negativeBarColor ?? '#FF0000', // Default red
-      barCornerRounding: settings.barCornerRounding ?? 10, // Default rounding
-      sparklineColor: settings.sparklineColor ?? 'blue' // Default sparkline color
+      tableBorderWidth: settings.tableBorderWidth ?? 2,
+      datePart: defaultDatePart,
+      positiveBarColor: settings.positiveBarColor ?? '#62BB9A',
+      negativeBarColor: settings.negativeBarColor ?? '#FF0000',
+      barCornerRounding: settings.barCornerRounding ?? 10,
+      sparklineColor: settings.sparklineColor ?? 'blue'
     });
   }
+
+  return { initialLists, initialGroupLabels: stateLabels };
+};
+
+export const applyConditionalFormatting = (
+  value: number,
+  index: number,
+  context: IncortaContext<IncortaTContext>,
+  defaultColor: string
+): string => {
+  const binding = context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding;
+  const conditions = binding?.settings?.conditions || [];
+
+  for (const condition of conditions) {
+    const threshold = parseFloat(condition.value);
+    if (condition.op === '<' && value < threshold) return condition.color;
+    if (condition.op === '>' && value > threshold) return condition.color;
+    if (condition.op === '=' && value === threshold) return condition.color;
+    if (condition.op === '<=' && value <= threshold) return condition.color;
+    if (condition.op === '>=' && value >= threshold) return condition.color;
+  }
+
+  return defaultColor;
 };
 
 export const getMaxValueInColumn = (lists: number[][][], colIndex: number): number => {
   return Math.max(...lists.map(row => Math.max(...row[colIndex])));
+};
+
+export const getConditionalColor = (
+  value: number,
+  index: number,
+  context: IncortaContext<IncortaTContext>,
+  defaultColor: string
+): string => {
+  const binding = context?.component?.bindings?.["tray-key"]?.[index] as unknown as Binding;
+  const conditions = binding?.settings?.conditions || [];
+
+  for (const condition of conditions) {
+    const threshold = parseFloat(condition.value);
+    if (condition.op === '<' && value < threshold) return condition.color;
+    if (condition.op === '>' && value > threshold) return condition.color;
+    if (condition.op === '=' && value === threshold) return condition.color;
+    if (condition.op === '<=' && value <= threshold) return condition.color;
+    if (condition.op === '>=' && value >= threshold) return condition.color;
+  }
+
+  return defaultColor;
 };
