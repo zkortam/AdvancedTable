@@ -10,7 +10,7 @@ import { Sparklines, SparklinesLine } from 'react-sparklines';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './styles.less';
-import { formatNumber, handleMouseDown, initializeState, getMaxValueInColumn } from './utils';
+import { formatNumber, handleMouseDown, initializeState, getMaxValueInColumn, getConditionalColor } from './utils';
 import ModalComponent from './ModalComponent';
 import { Chart } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -30,7 +30,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const [lists, setLists] = useState<number[][][]>([]);
   const [titles, setTitles] = useState<string[]>([]);
   const [groupLabels, setGroupLabels] = useState<(string | number)[]>([]);
-  const [columnLabel, setColumnLabel] = useState<string>("");
+  const [columnLabel, setColumnLabel] = useState<string>("Group");
   const [valueLabel, setValueLabel] = useState<string>("");
   const [dates, setDates] = useState<string[][]>([]);
   const [tableSettings, setTableSettings] = useState({
@@ -74,23 +74,24 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates);
+    const { initialLists, initialGroupLabels } = initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates, context);
+
+    // Set the column label for the group column (first column)
+    if (data.colHeaders && data.colHeaders[0]?.label) {
+      setColumnLabel(data.colHeaders[0].label);
+    }
   }, [data, settings]);
 
   useEffect(() => {
     if (tableSettings.datePart) {
-      initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates);
+      initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates, context);
     }
   }, [tableSettings.datePart]);
 
   const handleResetTable = () => {
-    const numberOfLists = Math.min(data.measureHeaders.length, 50);
-    const initialLists: number[][][] = Array.from({ length: numberOfLists }, (_, i) =>
-      data.data.map(row => [Number(row[i + 1]?.value || 0)])
-    );
-    setLists(initialLists.map(list => list.map(subList => subList.slice(0, 50))));
-    const initialColumnWidths = [150, ...Array(numberOfLists * 3).fill(200)]; // Adjusted for new bar chart columns with 200px width
-    setTableSettings({ ...tableSettings, columnWidths: initialColumnWidths });
+    const { initialLists, initialGroupLabels } = initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates, context);
+    setLists(initialLists);
+    setGroupLabels(initialGroupLabels);
     setIsModalOpen(false);
   };
 
@@ -124,7 +125,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     if (hoverTimeout.current) {
       clearTimeout(hoverTimeout.current);
     }
-    // Delay closing to allow moving the cursor to the popup
     hoverTimeout.current = setTimeout(() => {
       setHoveredChart({ data: [], show: false, label: '', column: null, cellLeft: null, cellTop: null, dates: [] });
     }, 300);
@@ -167,22 +167,48 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     }
 
     if (newOrder) {
-      const sortedData = [...lists].map((_, rowIndex) => ({
-        groupLabel: groupLabels[rowIndex],
-        list: lists[rowIndex],
-      }));
+      if (column === -1) {
+        const sortedData = [...lists].map((_, rowIndex) => ({
+          groupLabel: groupLabels[rowIndex],
+          list: lists[rowIndex],
+        }));
 
-      sortedData.sort((a, b) => {
-        const aValue = a.list[column][0];
-        const bValue = b.list[column][0];
-        return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
-      });
+        sortedData.sort((a, b) => {
+          const aValue = a.groupLabel;
+          const bValue = b.groupLabel;
 
-      const sortedGroupLabels = sortedData.map(item => item.groupLabel);
-      const sortedLists = sortedData.map(item => item.list);
+          if (typeof aValue === 'number' && typeof bValue === 'number') {
+            return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+          } else {
+            const aString = aValue.toString();
+            const bString = bValue.toString();
+            return newOrder === 'asc' ? aString.localeCompare(bString) : bString.localeCompare(aString);
+          }
+        });
 
-      setGroupLabels(sortedGroupLabels);
-      setLists(sortedLists);
+        const sortedGroupLabels = sortedData.map(item => item.groupLabel);
+        const sortedLists = sortedData.map(item => item.list);
+
+        setGroupLabels(sortedGroupLabels);
+        setLists(sortedLists);
+      } else {
+        const sortedData = [...lists].map((_, rowIndex) => ({
+          groupLabel: groupLabels[rowIndex],
+          list: lists[rowIndex],
+        }));
+
+        sortedData.sort((a, b) => {
+          const aValue = a.list[column]?.[0] ?? 0;
+          const bValue = b.list[column]?.[0] ?? 0;
+          return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        });
+
+        const sortedGroupLabels = sortedData.map(item => item.groupLabel);
+        const sortedLists = sortedData.map(item => item.list);
+
+        setGroupLabels(sortedGroupLabels);
+        setLists(sortedLists);
+      }
     }
 
     setSortState({ column: newOrder ? column : null, order: newOrder });
@@ -230,6 +256,25 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     );
   };
 
+  const renderValueCell = (value: number, column: number, rowIndex: number) => {
+    const maxValue = getMaxValueInColumn(lists, column);
+    const defaultTextColor = '#000000'; // Default text color (black)
+    const textColor = getConditionalColor(value, column, context, defaultTextColor);
+
+    return (
+        <td
+            style={{
+                border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`,
+                width: `${tableSettings.columnWidths[column * 3 + 1]}px`,
+            }}
+        >
+            <span style={{ color: textColor }}>
+                {typeof value === 'number' ? formatNumber(value) : value}
+            </span>
+        </td>
+    );
+};
+
   return (
     <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}` }}>
       <ModalComponent
@@ -241,9 +286,9 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         <div 
           className="chart-popup" 
           style={{ 
-            left: `${hoveredChart.cellLeft - 640}px`, 
+            left: `${hoveredChart.cellLeft - 540}px`, 
             top: `${hoveredChart.cellTop}px`, 
-            maxWidth: '500px', // Reduced width by 100px
+            maxWidth: '500px', 
             height: '300px', 
             width: '90%' 
           }}
@@ -308,9 +353,9 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         <div 
           className="chart-popup" 
           style={{ 
-            left: `${persistentChart.cellLeft - 640}px`, 
+            left: `${persistentChart.cellLeft - 540}px`, 
             top: `${persistentChart.cellTop}px`, 
-            maxWidth: '500px', // Reduced width by 100px
+            maxWidth: '500px', 
             height: '300px', 
             width: '90%' 
           }}
@@ -382,11 +427,27 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           <thead>
             <tr>
               {tableSettings.showRowNumbers && (
-                <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: '50px', position: 'relative' }}>
+                <th 
+                  style={{ 
+                    border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                    width: '50px', 
+                    position: 'relative',
+                    color: getSortIndicatorColor(0)
+                  }}
+                  onClick={() => handleSort(0)}
+                >
                   #
                 </th>
               )}
-              <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px`, position: 'relative' }}>
+              <th 
+                style={{ 
+                  border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                  width: `${tableSettings.columnWidths[0]}px`, 
+                  position: 'relative',
+                  color: getSortIndicatorColor(-1)
+                }}
+                onClick={() => handleSort(-1)}
+              >
                 {columnLabel}
                 <div
                   style={{
@@ -410,7 +471,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                         border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
                         width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
                         position: 'relative',
-                        color: getSortIndicatorColor(index) // Set color based on sort order
+                        color: getSortIndicatorColor(index)
                       }}
                       onClick={() => handleSort(index)}
                     >
@@ -436,7 +497,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                         border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
                         width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
                         position: 'relative',
-                        color: getSortIndicatorColor(index) // Set color based on sort order
+                        color: getSortIndicatorColor(index)
                       }}
                       onClick={() => handleSort(index)}
                     >
@@ -464,7 +525,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                         width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
                         position: 'relative', 
                         padding: '15px',
-                        color: getSortIndicatorColor(index) // Set color based on sort order
+                        color: getSortIndicatorColor(index)
                       }}
                       onClick={() => handleSort(index)}
                     >
@@ -498,9 +559,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                 {lists[rowIndex].map((values, colIndex) => (
                   <React.Fragment key={colIndex}>
                     {tableSettings.showValueColumns && (
-                      <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 1]}px` }}>
-                        {typeof values[0] === 'number' ? formatNumber(values.reduce((a, b) => a + b, 0)) : values[0]}
-                      </td>
+                      renderValueCell(values[0], colIndex, rowIndex)
                     )}
                     {tableSettings.showBarCharts && (
                       <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
