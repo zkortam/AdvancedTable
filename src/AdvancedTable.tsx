@@ -68,6 +68,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     cellTop: number | null, 
     dates: string[] 
   }>({ data: [], show: false, label: '', column: null, cellLeft: null, cellTop: null, dates: [] });
+  const [sortState, setSortState] = useState<{ column: number | null, order: 'asc' | 'desc' | null }>({ column: null, order: null });
 
   const tableRef = useRef<HTMLTableElement>(null);
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -151,6 +152,49 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     setHoveredChart({ data: [], show: false, label: '', column: null, cellLeft: null, cellTop: null, dates: [] });
   };
 
+  const handleSort = (column: number) => {
+    let newOrder: 'asc' | 'desc' | null = null;
+    if (sortState.column === column) {
+      if (sortState.order === 'desc') {
+        newOrder = 'asc';
+      } else if (sortState.order === 'asc') {
+        newOrder = null;
+      } else {
+        newOrder = 'desc';
+      }
+    } else {
+      newOrder = 'desc';
+    }
+
+    if (newOrder) {
+      const sortedData = [...lists].map((_, rowIndex) => ({
+        groupLabel: groupLabels[rowIndex],
+        list: lists[rowIndex],
+      }));
+
+      sortedData.sort((a, b) => {
+        const aValue = a.list[column][0];
+        const bValue = b.list[column][0];
+        return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      });
+
+      const sortedGroupLabels = sortedData.map(item => item.groupLabel);
+      const sortedLists = sortedData.map(item => item.list);
+
+      setGroupLabels(sortedGroupLabels);
+      setLists(sortedLists);
+    }
+
+    setSortState({ column: newOrder ? column : null, order: newOrder });
+  };
+
+  const getSortIndicatorColor = (column: number) => {
+    if (sortState.column === column) {
+      return sortState.order === 'asc' ? 'green' : 'red';
+    }
+    return 'inherit';
+  };
+
   const renderChartCell = (value: number, maxValue: number) => {
     const percentage = (Math.abs(value) / maxValue) * 100;
     const positiveWidth = value > 0 ? percentage : 0;
@@ -199,7 +243,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           style={{ 
             left: `${hoveredChart.cellLeft - 640}px`, 
             top: `${hoveredChart.cellTop}px`, 
-            maxWidth: '600px', 
+            maxWidth: '500px', // Reduced width by 100px
             height: '300px', 
             width: '90%' 
           }}
@@ -266,7 +310,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           style={{ 
             left: `${persistentChart.cellLeft - 640}px`, 
             top: `${persistentChart.cellTop}px`, 
-            maxWidth: '600px', 
+            maxWidth: '500px', // Reduced width by 100px
             height: '300px', 
             width: '90%' 
           }}
@@ -361,7 +405,15 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
               {titles.map((title, index) => (
                 <React.Fragment key={index}>
                   {tableSettings.showValueColumns && (
-                    <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 1]}px`, position: 'relative' }}>
+                    <th 
+                      style={{ 
+                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                        width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
+                        position: 'relative',
+                        color: getSortIndicatorColor(index) // Set color based on sort order
+                      }}
+                      onClick={() => handleSort(index)}
+                    >
                       {title} Value
                       <div
                         style={{
@@ -379,7 +431,15 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                     </th>
                   )}
                   {tableSettings.showBarCharts && (
-                    <th style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 2]}px`, position: 'relative' }}>
+                    <th 
+                      style={{ 
+                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                        width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
+                        position: 'relative',
+                        color: getSortIndicatorColor(index) // Set color based on sort order
+                      }}
+                      onClick={() => handleSort(index)}
+                    >
                       {title} Bar Chart
                       <div
                         style={{
@@ -397,7 +457,17 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                     </th>
                   )}
                   {tableSettings.showLineCharts && (
-                    <th className="chart-cell" style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[index * 3 + 3]}px`, position: 'relative', padding: '15px' }}>
+                    <th 
+                      className="chart-cell" 
+                      style={{ 
+                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                        width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
+                        position: 'relative', 
+                        padding: '15px',
+                        color: getSortIndicatorColor(index) // Set color based on sort order
+                      }}
+                      onClick={() => handleSort(index)}
+                    >
                       {title} Sparkline
                       <div
                         style={{
@@ -438,11 +508,14 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                       </td>
                     )}
                     {tableSettings.showLineCharts && (
-                      <td className="chart-cell" style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px`, padding: '0 15px' }}
-                          onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
-                          onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
-                          onMouseLeave={handleSparklineLeave}
-                          onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}>
+                      <td 
+                        className="chart-cell" 
+                        style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px`, padding: '0 15px' }}
+                        onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                        onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                        onMouseLeave={handleSparklineLeave}
+                        onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                      >
                         <Sparklines data={values} limit={values.length} width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} margin={0}>
                           <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
                         </Sparklines>
