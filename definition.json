@@ -10,26 +10,9 @@
   "settings": [
     {
       "name": {
-        "key": "Display Settings"
+        "key": "Table Appearance"
       },
       "settings": [
-        {
-          "name": {
-            "key": "Title"
-          },
-          "key": "title",
-          "type": "text",
-          "hint": "Enter the title text"
-        },
-        {
-          "name": {
-            "key": "Bar Rounding"
-          },
-          "key": "barRounding",
-          "type": "number",
-          "hint": "Select the rounding radius for the bar (px)",
-          "default": 1
-        },
         {
           "name": {
             "key": "Table Border Radius"
@@ -55,6 +38,40 @@
           "type": "number",
           "hint": "Select the border thickness for the table (px)",
           "default": 2
+        },
+        {
+          "name": {
+            "key": "Alternating Row Colors"
+          },
+          "key": "alternatingRowColors",
+          "type": "boolean",
+          "hint": "Toggle alternating row colors",
+          "default": false
+        },
+        {
+          "name": {
+            "key": "Show Row Numbers"
+          },
+          "key": "showRowNumbers",
+          "type": "boolean",
+          "hint": "Toggle the visibility of row numbers",
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Chart Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Bar Rounding"
+          },
+          "key": "barRounding",
+          "type": "number",
+          "hint": "Select the rounding radius for the bar (px)",
+          "default": 1
         },
         {
           "name": {
@@ -85,21 +102,12 @@
         },
         {
           "name": {
-            "key": "Show Value Columns"
-          },
-          "key": "showValueColumns",
-          "type": "boolean",
-          "hint": "Toggle the visibility of value columns",
-          "default": true
-        },
-        {
-          "name": {
             "key": "Show Bar Charts"
           },
           "key": "showBarCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of bar charts",
-          "default": true
+          "default": false
         },
         {
           "name": {
@@ -108,25 +116,23 @@
           "key": "showLineCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of line charts",
+          "default": false
+        }
+      ]
+    },
+    {
+      "name": {
+        "key": "Column Settings"
+      },
+      "settings": [
+        {
+          "name": {
+            "key": "Show Value Columns"
+          },
+          "key": "showValueColumns",
+          "type": "boolean",
+          "hint": "Toggle the visibility of value columns",
           "default": true
-        },
-        {
-          "name": {
-            "key": "Alternating Row Colors"
-          },
-          "key": "alternatingRowColors",
-          "type": "boolean",
-          "hint": "Toggle alternating row colors",
-          "default": false
-        },
-        {
-          "name": {
-            "key": "Show Row Numbers"
-          },
-          "key": "showRowNumbers",
-          "type": "boolean",
-          "hint": "Toggle the visibility of row numbers",
-          "default": false
         }
       ]
     }
@@ -191,6 +197,23 @@
               "key": "transparency",
               "type": "number",
               "defaultValue": 70
+            }
+          ]
+        },
+        {
+          "name": {
+            "key": "Conditional Formatting"
+          },
+          "settings": [
+            {
+              "name": "Conditions",
+              "key": "conditions",
+              "type": "conditional-formatting",
+              "uiControlOptions": {
+                "labels": {
+                  "backgroundColor": "Text color"
+                }
+              }
             }
           ]
         }
