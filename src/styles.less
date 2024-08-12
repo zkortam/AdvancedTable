@@ -2,7 +2,6 @@
 @rowColor: #ffffff; // Default row color
 @tableBorderRadius: 1px; // Default table border radius
 @tableBorderColor: #A9A9A9; // Default table border color
-@barRounding: 30px; // Default bar rounding
 
 .advanced-table {
   overflow: hidden;
@@ -14,10 +13,10 @@
 
   table {
     border-collapse: separate;
-    border-spacing: 0; 
+    border-spacing: 0;
     width: 100%;
     border-radius: @tableBorderRadius;
-    overflow: hidden; 
+    overflow: hidden;
 
     th, td {
       border: 2px solid @tableBorderColor;
@@ -36,19 +35,19 @@
     }
 
     // Ensure rounded corners for the table
-    tr:first-child th:first-child { 
+    tr:first-child th:first-child {
       border-top-left-radius: @tableBorderRadius;
     }
 
-    tr:first-child th:last-child { 
+    tr:first-child th:last-child {
       border-top-right-radius: @tableBorderRadius;
     }
 
-    tr:last-child td:first-child { 
+    tr:last-child td:first-child {
       border-bottom-left-radius: @tableBorderRadius;
     }
 
-    tr:last-child td:last-child { 
+    tr:last-child td:last-child {
       border-bottom-right-radius: @tableBorderRadius;
     }
   }
@@ -56,7 +55,7 @@
   .resizer {
     display: inline-block;
     width: 5px;
-    height: 100%;
+    height: 50px;
     cursor: col-resize;
     position: absolute;
     right: 0;
@@ -68,6 +67,24 @@
     &:hover {
       cursor: pointer;
     }
+  }
+
+  .bar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 20px;
+    width: 100%; /* Ensure it takes the full width of the cell */
+    overflow: hidden; /* Hide any overflow */
+  }
+
+  .bar {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 10px; // Example rounding, can be customized
   }
 }
 
@@ -161,39 +178,5 @@
     border-radius: 20px;
     padding: 5px 10px;
     cursor: pointer;
-  }
-}
-
-.bar-chart {
-  width: 100%;
-  display: flex;
-  align-items: center;
-
-  .positive-bar {
-    flex: 1;
-    height: 20px;
-    position: relative;
-
-    .positive-bar-inner {
-      height: 20px;
-      background-color: green;
-      position: absolute;
-      left: 0;
-      border-radius: @barRounding;
-    }
-  }
-
-  .negative-bar {
-    flex: 1;
-    height: 20px;
-    position: relative;
-
-    .negative-bar-inner {
-      height: 20px;
-      background-color: red;
-      position: absolute;
-      right: 0;
-      border-radius: @barRounding;
-    }
   }
 }
