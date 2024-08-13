@@ -6,8 +6,8 @@ import {
   ResponseData,
   TContext
 } from '@incorta-org/component-sdk';
-import { Sparklines, SparklinesLine } from 'react-sparklines';
 import { Line } from 'react-chartjs-2';
+import { Sparklines, SparklinesLine } from 'react-sparklines';
 import 'chart.js/auto';
 import './styles.less';
 import { formatNumber, handleMouseDown, initializeState, getMaxValueInColumn, getConditionalColor } from './utils';
@@ -46,7 +46,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     datePart: 'Month',
     positiveBarColor: '#00FF00', // Default green
     negativeBarColor: '#FF0000', // Default red
-    barCornerRounding: 10, // Default rounding
+    barRounding: 10, // Default rounding
     sparklineColor: 'blue' // Default sparkline color
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -155,64 +155,88 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const handleSort = (column: number) => {
     let newOrder: 'asc' | 'desc' | null = null;
     if (sortState.column === column) {
-      if (sortState.order === 'desc') {
-        newOrder = 'asc';
-      } else if (sortState.order === 'asc') {
-        newOrder = null;
-      } else {
-        newOrder = 'desc';
-      }
+        if (sortState.order === 'desc') {
+            newOrder = 'asc';
+        } else if (sortState.order === 'asc') {
+            newOrder = null;
+        } else {
+            newOrder = 'desc';
+        }
     } else {
-      newOrder = 'desc';
+        newOrder = 'desc';
     }
 
     if (newOrder) {
-      if (column === -1) {
-        const sortedData = [...lists].map((_, rowIndex) => ({
-          groupLabel: groupLabels[rowIndex],
-          list: lists[rowIndex],
+        if (column === -1) {
+            const sortedData = [...lists].map((_, rowIndex) => ({
+                groupLabel: groupLabels[rowIndex],
+                list: lists[rowIndex],
+            }));
+
+            sortedData.sort((a, b) => {
+                const aValue = a.groupLabel;
+                const bValue = b.groupLabel;
+
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+                } else {
+                    const aString = aValue.toString();
+                    const bString = bValue.toString();
+                    return newOrder === 'asc' ? aString.localeCompare(bString) : bString.localeCompare(aString);
+                }
+            });
+
+            const sortedGroupLabels = sortedData.map(item => item.groupLabel);
+            const sortedLists = sortedData.map(item => item.list);
+
+            setGroupLabels(sortedGroupLabels);
+            setLists(sortedLists);
+        } else {
+            const sortedData = [...lists].map((_, rowIndex) => ({
+                groupLabel: groupLabels[rowIndex],
+                list: lists[rowIndex],
+            }));
+
+            sortedData.sort((a, b) => {
+                const aValue = a.list[column]?.[0] ?? 0;
+                const bValue = b.list[column]?.[0] ?? 0;
+                return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
+            });
+
+            const sortedGroupLabels = sortedData.map(item => item.groupLabel);
+            const sortedLists = sortedData.map(item => item.list);
+
+            setGroupLabels(sortedGroupLabels);
+            setLists(sortedLists);
+        }
+    } else {
+        // Reset only the sort order without altering column widths or other settings
+        setSortState({ column: null, order: null });
+
+        // Sort the data back to its original order based on the groupLabels
+        const resetData = [...lists].map((_, rowIndex) => ({
+            groupLabel: groupLabels[rowIndex],
+            list: lists[rowIndex],
         }));
 
-        sortedData.sort((a, b) => {
-          const aValue = a.groupLabel;
-          const bValue = b.groupLabel;
+        const originalDataOrder = data.data.map((row) => row[0]?.value);
+        
+        resetData.sort((a, b) => {
+          const aIndex = originalDataOrder.indexOf(a.groupLabel?.toString()); // Convert to string
+          const bIndex = originalDataOrder.indexOf(b.groupLabel?.toString()); // Convert to string
+          return aIndex - bIndex;
+       });
+      
 
-          if (typeof aValue === 'number' && typeof bValue === 'number') {
-            return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
-          } else {
-            const aString = aValue.toString();
-            const bString = bValue.toString();
-            return newOrder === 'asc' ? aString.localeCompare(bString) : bString.localeCompare(aString);
-          }
-        });
+        const resetGroupLabels = resetData.map(item => item.groupLabel);
+        const resetLists = resetData.map(item => item.list);
 
-        const sortedGroupLabels = sortedData.map(item => item.groupLabel);
-        const sortedLists = sortedData.map(item => item.list);
-
-        setGroupLabels(sortedGroupLabels);
-        setLists(sortedLists);
-      } else {
-        const sortedData = [...lists].map((_, rowIndex) => ({
-          groupLabel: groupLabels[rowIndex],
-          list: lists[rowIndex],
-        }));
-
-        sortedData.sort((a, b) => {
-          const aValue = a.list[column]?.[0] ?? 0;
-          const bValue = b.list[column]?.[0] ?? 0;
-          return newOrder === 'asc' ? aValue - bValue : bValue - aValue;
-        });
-
-        const sortedGroupLabels = sortedData.map(item => item.groupLabel);
-        const sortedLists = sortedData.map(item => item.list);
-
-        setGroupLabels(sortedGroupLabels);
-        setLists(sortedLists);
-      }
+        setGroupLabels(resetGroupLabels);
+        setLists(resetLists);
     }
 
     setSortState({ column: newOrder ? column : null, order: newOrder });
-  };
+};
 
   const getSortIndicatorColor = (column: number) => {
     if (sortState.column === column) {
@@ -237,7 +261,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                 backgroundColor: tableSettings.negativeBarColor, 
                 position: 'absolute', 
                 right: 0, 
-                borderRadius: `${tableSettings.barCornerRounding}px` 
+                borderRadius: `${tableSettings.barRounding}px` 
               }}></div>
             </div>
             <div style={{ flex: '1', height: '20px', position: 'relative' }}>
@@ -247,7 +271,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                 backgroundColor: tableSettings.positiveBarColor, 
                 position: 'absolute', 
                 left: 0, 
-                borderRadius: `${tableSettings.barCornerRounding}px` 
+                borderRadius: `${tableSettings.barRounding}px` 
               }}></div>
             </div>
           </>
@@ -275,6 +299,96 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     );
 };
 
+  const renderSparkline = (values: number[], dates: string[], colIndex: number) => {
+    // Non-expanded view should use Sparklines
+    return (
+      <Sparklines data={values} limit={values.length} width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} margin={0}>
+        <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
+      </Sparklines>
+    );
+  };
+
+  const renderExpandedSparkline = (values: number[], dates: string[], colIndex: number) => {
+    // Expanded view should use Line component with zoom functionality
+    const data = {
+      labels: dates,
+      datasets: [
+        {
+          label: 'Sparkline',
+          data: values,
+          borderColor: tableSettings.sparklineColor,
+          fill: false,
+          tension: 0.4,
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Date',
+          },
+          ticks: {
+            maxTicksLimit: 10, // Limit the number of ticks to avoid cluttering
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Value',
+          },
+          ticks: {
+            callback: function (tickValue: string | number) {
+              // Ensure tickValue is treated as a number before formatting
+              if (typeof tickValue === 'number') {
+                return formatNumber(tickValue);
+              }
+              // If tickValue is not a number, return it as is
+              return tickValue;
+            },
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x' as 'x' | 'y' | 'xy', // Specify 'x' as one of the allowed types
+          },
+          zoom: {
+            wheel: {
+              enabled: true,
+            },
+            pinch: {
+              enabled: true,
+            },
+            mode: 'x' as 'x' | 'y' | 'xy', // Specify 'x' as one of the allowed types
+          },
+        },
+      },
+      interaction: {
+        mode: 'nearest' as 'x' | 'nearest' | 'index' | 'dataset' | 'point' | 'y' | undefined,
+        intersect: false,
+      },
+    };    
+
+    return (
+      <Line 
+        data={data} 
+        options={options}
+        width={tableSettings.columnWidths[colIndex * 3 + 3] - 30}
+        height={tableSettings.columnWidths[colIndex * 3 + 3] / 8}
+      />
+    );
+  };
+
   return (
     <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}` }}>
       <ModalComponent
@@ -295,58 +409,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           onMouseEnter={handlePopupEnter}
           onMouseLeave={handlePopupLeave}
         >
-          <Line
-            data={{
-              labels: hoveredChart.dates.map(date => date.split(' ')[0]),
-              datasets: [{
-                label: hoveredChart.label,
-                data: hoveredChart.data,
-                borderColor: tableSettings.sparklineColor,
-                fill: false,
-                tension: 0.4,
-              }]
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Date'
-                  }
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Value'
-                  },
-                  ticks: {
-                    callback: (value) => formatNumber(value as number)
-                  }
-                }
-              },
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top'
-                },
-                tooltip: {
-                  enabled: true,
-                  mode: 'index',
-                  intersect: false,
-                  position: 'nearest',
-                  callbacks: {
-                    title: (context) => context[0].label
-                  }
-                }
-              },
-              interaction: {
-                mode: 'index',
-                intersect: false,
-              },
-            }}
-          />
+          {renderExpandedSparkline(hoveredChart.data, hoveredChart.dates, hoveredChart.column!)}
         </div>
       )}
       {persistentChart.show && persistentChart.cellLeft !== null && persistentChart.cellTop !== null && (
@@ -364,58 +427,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
           onMouseLeave={handlePopupLeave}
         >
           <button className="close-button" onClick={handleCloseChart}>Close</button>
-          <Line
-            data={{
-              labels: persistentChart.dates.map(date => date.split(' ')[0]),
-              datasets: [{
-                label: persistentChart.label,
-                data: persistentChart.data,
-                borderColor: tableSettings.sparklineColor,
-                fill: false,
-                tension: 0.4,
-              }]
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Date'
-                  }
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Value'
-                  },
-                  ticks: {
-                    callback: (value) => formatNumber(value as number)
-                  }
-                }
-              },
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top'
-                },
-                tooltip: {
-                  enabled: true,
-                  mode: 'index',
-                  intersect: false,
-                  position: 'nearest',
-                  callbacks: {
-                    title: (context) => context[0].label
-                  }
-                }
-              },
-              interaction: {
-                mode: 'index',
-                intersect: false,
-              },
-            }}
-          />
+          {renderExpandedSparkline(persistentChart.data, persistentChart.dates, persistentChart.column!)}
         </div>
       )}
       <div>
@@ -575,9 +587,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                         onMouseLeave={handleSparklineLeave}
                         onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
                       >
-                        <Sparklines data={values} limit={values.length} width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} margin={0}>
-                          <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
-                        </Sparklines>
+                        {renderSparkline(values, dates[rowIndex], colIndex)}
                       </td>
                     )}
                   </React.Fragment>
