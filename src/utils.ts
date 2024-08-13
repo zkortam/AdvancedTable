@@ -130,7 +130,7 @@ export const initializeState = (
       datePart: defaultDatePart,
       positiveBarColor: settings.positiveBarColor ?? '#62BB9A',
       negativeBarColor: settings.negativeBarColor ?? '#FF0000',
-      barCornerRounding: settings.barCornerRounding ?? 10,
+      barRounding: settings.barRounding ?? 10,  // Updated here
       sparklineColor: settings.sparklineColor ?? 'blue'
     });
   }
