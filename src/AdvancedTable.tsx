@@ -280,10 +280,28 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     );
   };
 
-  const renderValueCell = (value: number, column: number, rowIndex: number) => {
-    const maxValue = getMaxValueInColumn(lists, column);
-    const defaultTextColor = '#000000'; // Default text color (black)
-    const textColor = getConditionalColor(value, column, context, defaultTextColor);
+  const renderValueCell = (values: number[], column: number, rowIndex: number, aggregation: string) => {
+    let aggregatedValue = 0;
+
+    // Apply the selected aggregation
+    switch (aggregation) {
+        case 'sum':
+            aggregatedValue = values.reduce((acc, val) => acc + val, 0);
+            break;
+        case 'max':
+            aggregatedValue = Math.max(...values);
+            break;
+        case 'min':
+            aggregatedValue = Math.min(...values);
+            break;
+        case 'avg':
+            aggregatedValue = values.reduce((acc, val) => acc + val, 0) / values.length;
+            break;
+        default:
+            aggregatedValue = values[0]; // Default to the first value
+    }
+
+    const textColor = getConditionalColor(aggregatedValue, column, context, '#000000');
 
     return (
         <td
@@ -293,20 +311,29 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
             }}
         >
             <span style={{ color: textColor }}>
-                {typeof value === 'number' ? formatNumber(value) : value}
+                {formatNumber(aggregatedValue)}
             </span>
         </td>
     );
 };
 
-  const renderSparkline = (values: number[], dates: string[], colIndex: number) => {
-    // Non-expanded view should use Sparklines
-    return (
-      <Sparklines data={values} limit={values.length} width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} margin={0}>
-        <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
-      </Sparklines>
-    );
-  };
+
+const renderSparkline = (rawValues: number[], dates: string[], colIndex: number) => {
+  // Ensure the sparkline always uses raw data, regardless of aggregation
+  return (
+    <Sparklines 
+      data={rawValues} 
+      limit={rawValues.length} 
+      width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} 
+      height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} 
+      margin={0}
+    >
+      <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
+    </Sparklines>
+  );
+};
+
+
 
   const renderExpandedSparkline = (values: number[], dates: string[], colIndex: number) => {
     // Expanded view should use Line component with zoom functionality
@@ -571,7 +598,7 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
                 {lists[rowIndex].map((values, colIndex) => (
                   <React.Fragment key={colIndex}>
                     {tableSettings.showValueColumns && (
-                      renderValueCell(values[0], colIndex, rowIndex)
+                      renderValueCell(values, colIndex, rowIndex, settings?.aggregationMethod ?? 'sum')
                     )}
                     {tableSettings.showBarCharts && (
                       <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
