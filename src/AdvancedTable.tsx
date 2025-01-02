@@ -38,16 +38,22 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
     alternatingRowColors: true,
     columnWidths: [] as number[],
     tableBorderRadius: 10,
-    tableBorderWidth: 2, // Allow 0px for no border
+    tableBorderWidth: 2,
     showValueColumns: true,
     showLineCharts: true,
     showBarCharts: true,
     showRowNumbers: false,
     datePart: 'Month',
-    positiveBarColor: '#00FF00', // Default green
-    negativeBarColor: '#FF0000', // Default red
-    barRounding: 10, // Default rounding
-    sparklineColor: 'blue' // Default sparkline color
+    positiveBarColor: '#00FF00',
+    negativeBarColor: '#FF0000',
+    barRounding: 10,
+    sparklineColor: 'blue',
+    headerFontFamily: settings?.headerFontFamily || 'Arial',
+    headerFontSize: settings?.headerFontSize || 12,
+    headerFontColor: settings?.headerFontColor || '#000000',
+    cellFontFamily: settings?.valueFontFamily || 'Arial',
+    cellFontSize: settings?.valueFontSize || 12,
+    cellFontColor: settings?.valueFontColor || '#000000',
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [hoveredChart, setHoveredChart] = useState<{ 
@@ -76,7 +82,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   useEffect(() => {
     const { initialLists, initialGroupLabels } = initializeState(data, settings, setColumnLabel, setGroupLabels, setLists, setTitles, setValueLabel, setTableSettings, setDates, context);
 
-    // Set the column label for the group column (first column)
     if (data.colHeaders && data.colHeaders[0]?.label) {
       setColumnLabel(data.colHeaders[0].label);
     }
@@ -210,10 +215,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
             setLists(sortedLists);
         }
     } else {
-        // Reset only the sort order without altering column widths or other settings
         setSortState({ column: null, order: null });
 
-        // Sort the data back to its original order based on the groupLabels
         const resetData = [...lists].map((_, rowIndex) => ({
             groupLabel: groupLabels[rowIndex],
             list: lists[rowIndex],
@@ -222,8 +225,8 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
         const originalDataOrder = data.data.map((row) => row[0]?.value);
         
         resetData.sort((a, b) => {
-          const aIndex = originalDataOrder.indexOf(a.groupLabel?.toString()); // Convert to string
-          const bIndex = originalDataOrder.indexOf(b.groupLabel?.toString()); // Convert to string
+          const aIndex = originalDataOrder.indexOf(a.groupLabel?.toString()); 
+          const bIndex = originalDataOrder.indexOf(b.groupLabel?.toString()); 
           return aIndex - bIndex;
        });
       
@@ -283,7 +286,6 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
   const renderValueCell = (values: number[], column: number, rowIndex: number, aggregation: string) => {
     let aggregatedValue = 0;
 
-    // Apply the selected aggregation
     switch (aggregation) {
         case 'sum':
             aggregatedValue = values.reduce((acc, val) => acc + val, 0);
@@ -298,334 +300,337 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
             aggregatedValue = values.reduce((acc, val) => acc + val, 0) / values.length;
             break;
         default:
-            aggregatedValue = values[0]; // Default to the first value
+            aggregatedValue = values[0];
     }
 
-    const textColor = getConditionalColor(aggregatedValue, column, context, '#000000');
+    const textColor = getConditionalColor(aggregatedValue, column, context, tableSettings.cellFontColor);
 
     return (
         <td
             style={{
                 border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`,
                 width: `${tableSettings.columnWidths[column * 3 + 1]}px`,
+                fontFamily: tableSettings.cellFontFamily,
+                fontSize: `${tableSettings.cellFontSize}px`,
+                color: textColor,
             }}
         >
-            <span style={{ color: textColor }}>
-                {formatNumber(aggregatedValue)}
-            </span>
+            <span>{formatNumber(aggregatedValue)}</span>
         </td>
-    );
-};
-
-
-const renderSparkline = (rawValues: number[], dates: string[], colIndex: number) => {
-  // Ensure the sparkline always uses raw data, regardless of aggregation
-  return (
-    <Sparklines 
-      data={rawValues} 
-      limit={rawValues.length} 
-      width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} 
-      height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} 
-      margin={0}
-    >
-      <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
-    </Sparklines>
-  );
-};
-
-
-
-  const renderExpandedSparkline = (values: number[], dates: string[], colIndex: number) => {
-    // Expanded view should use Line component with zoom functionality
-    const data = {
-      labels: dates,
-      datasets: [
-        {
-          label: 'Sparkline',
-          data: values,
-          borderColor: tableSettings.sparklineColor,
-          fill: false,
-          tension: 0.4,
-        },
-      ],
-    };
-
-    const options = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: 'Date',
-          },
-          ticks: {
-            maxTicksLimit: 10, // Limit the number of ticks to avoid cluttering
-          },
-        },
-        y: {
-          title: {
-            display: true,
-            text: 'Value',
-          },
-          ticks: {
-            callback: function (tickValue: string | number) {
-              // Ensure tickValue is treated as a number before formatting
-              if (typeof tickValue === 'number') {
-                return formatNumber(tickValue);
-              }
-              // If tickValue is not a number, return it as is
-              return tickValue;
-            },
-          },
-        },
-      },
-      plugins: {
-        legend: {
-          display: false,
-        },
-        zoom: {
-          pan: {
-            enabled: true,
-            mode: 'x' as 'x' | 'y' | 'xy', // Specify 'x' as one of the allowed types
-          },
-          zoom: {
-            wheel: {
-              enabled: true,
-            },
-            pinch: {
-              enabled: true,
-            },
-            mode: 'x' as 'x' | 'y' | 'xy', // Specify 'x' as one of the allowed types
-          },
-        },
-      },
-      interaction: {
-        mode: 'nearest' as 'x' | 'nearest' | 'index' | 'dataset' | 'point' | 'y' | undefined,
-        intersect: false,
-      },
-    };    
-
-    return (
-      <Line 
-        data={data} 
-        options={options}
-        width={tableSettings.columnWidths[colIndex * 3 + 3] - 30}
-        height={tableSettings.columnWidths[colIndex * 3 + 3] / 8}
-      />
     );
   };
 
-  return (
-    <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}` }}>
-      <ModalComponent
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleResetTable}
-      />
-      {hoveredChart.show && hoveredChart.cellLeft !== null && hoveredChart.cellTop !== null && (
-        <div 
-          className="chart-popup" 
-          style={{ 
-            left: `${hoveredChart.cellLeft - 540}px`, 
-            top: `${hoveredChart.cellTop}px`, 
-            maxWidth: '500px', 
-            height: '300px', 
-            width: '90%' 
-          }}
-          onMouseEnter={handlePopupEnter}
-          onMouseLeave={handlePopupLeave}
-        >
-          {renderExpandedSparkline(hoveredChart.data, hoveredChart.dates, hoveredChart.column!)}
-        </div>
-      )}
-      {persistentChart.show && persistentChart.cellLeft !== null && persistentChart.cellTop !== null && (
-        <div 
-          className="chart-popup" 
-          style={{ 
-            left: `${persistentChart.cellLeft - 540}px`, 
-            top: `${persistentChart.cellTop}px`, 
-            maxWidth: '500px', 
-            height: '300px', 
-            width: '90%' 
-          }}
-          onClick={(e) => e.stopPropagation()}
-          onMouseEnter={handlePopupEnter}
-          onMouseLeave={handlePopupLeave}
-        >
-          <button className="close-button" onClick={handleCloseChart}>Close</button>
-          {renderExpandedSparkline(persistentChart.data, persistentChart.dates, persistentChart.column!)}
-        </div>
-      )}
-      <div>
-        <table
-          ref={tableRef}
-          onContextMenu={handleTableRightClick}
-          style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, borderCollapse: 'collapse' }}
-        >
-          <thead>
-            <tr>
-              {tableSettings.showRowNumbers && (
+  const renderSparkline = (rawValues: number[], dates: string[], colIndex: number) => {
+    return (
+      <Sparklines 
+        data={rawValues} 
+        limit={rawValues.length} 
+        width={tableSettings.columnWidths[colIndex * 3 + 3] - 30} 
+        height={tableSettings.columnWidths[colIndex * 3 + 3] / 8} 
+        margin={0}
+      >
+        <SparklinesLine style={{ stroke: tableSettings.sparklineColor, fill: "none", strokeWidth: 1.5, strokeLinejoin: "round", strokeLinecap: "round" }} />
+      </Sparklines>
+    );
+  };
+
+  const renderExpandedSparkline = (values: number[], dates: string[], colIndex: number) => {
+      const data = {
+        labels: dates,
+        datasets: [
+          {
+            label: 'Sparkline',
+            data: values,
+            borderColor: tableSettings.sparklineColor,
+            fill: false,
+            tension: 0.4,
+          },
+        ],
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Date',
+            },
+            ticks: {
+              maxTicksLimit: 10,
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Value',
+            },
+            ticks: {
+              callback: function (tickValue: string | number) {
+                if (typeof tickValue === 'number') {
+                  return formatNumber(tickValue);
+                }
+                return tickValue;
+              },
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: 'x' as 'x' | 'y' | 'xy', 
+            },
+            zoom: {
+              wheel: {
+                enabled: true,
+              },
+              pinch: {
+                enabled: true,
+              },
+              mode: 'x' as 'x' | 'y' | 'xy', 
+            },
+          },
+        },
+        interaction: {
+          mode: 'nearest' as 'x' | 'nearest' | 'index' | 'dataset' | 'point' | 'y' | undefined,
+          intersect: false,
+        },
+      };    
+
+      return (
+        <Line 
+          data={data} 
+          options={options}
+          width={tableSettings.columnWidths[colIndex * 3 + 3] - 30}
+          height={tableSettings.columnWidths[colIndex * 3 + 3] / 8}
+        />
+      );
+    };
+
+    return (
+      <div className="advanced-table" style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}` }}>
+        <ModalComponent
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={handleResetTable}
+        />
+        {hoveredChart.show && hoveredChart.cellLeft !== null && hoveredChart.cellTop !== null && (
+          <div 
+            className="chart-popup" 
+            style={{ 
+              left: `${hoveredChart.cellLeft - 540}px`, 
+              top: `${hoveredChart.cellTop}px`, 
+              maxWidth: '500px', 
+              height: '300px', 
+              width: '90%' 
+            }}
+            onMouseEnter={handlePopupEnter}
+            onMouseLeave={handlePopupLeave}
+          >
+            {renderExpandedSparkline(hoveredChart.data, hoveredChart.dates, hoveredChart.column!)}
+          </div>
+        )}
+        {persistentChart.show && persistentChart.cellLeft !== null && persistentChart.cellTop !== null && (
+          <div 
+            className="chart-popup" 
+            style={{ 
+              left: `${persistentChart.cellLeft - 540}px`, 
+              top: `${persistentChart.cellTop}px`, 
+              maxWidth: '500px', 
+              height: '300px', 
+              width: '90%' 
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={handlePopupEnter}
+            onMouseLeave={handlePopupLeave}
+          >
+            <button className="close-button" onClick={handleCloseChart}>Close</button>
+            {renderExpandedSparkline(persistentChart.data, persistentChart.dates, persistentChart.column!)}
+          </div>
+        )}
+        <div>
+          <table
+            ref={tableRef}
+            onContextMenu={handleTableRightClick}
+            style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, borderCollapse: 'collapse' }}
+          >
+            <thead>
+              <tr>
+                {tableSettings.showRowNumbers && (
+                  <th 
+                    style={{ 
+                      border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                      width: '50px', 
+                      position: 'relative',
+                      color: getSortIndicatorColor(0)
+                    }}
+                    onClick={() => handleSort(0)}
+                  >
+                    #
+                  </th>
+                )}
                 <th 
                   style={{ 
                     border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                    width: '50px', 
+                    width: `${tableSettings.columnWidths[0]}px`, 
                     position: 'relative',
-                    color: getSortIndicatorColor(0)
+                    fontFamily: tableSettings.headerFontFamily,
+                    fontSize: `${tableSettings.headerFontSize}px`,
+                    color: tableSettings.headerFontColor
                   }}
-                  onClick={() => handleSort(0)}
+                  onClick={() => handleSort(-1)}
                 >
-                  #
+                  {columnLabel}
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      width: '5px',
+                      height: '100%',
+                      cursor: 'col-resize',
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                    }}
+                    onMouseDown={(e) => handleMouseDown({ e, index: 0, startWidth: tableSettings.columnWidths[0], columnWidths: tableSettings.columnWidths, setTableSettings })}
+                  />
                 </th>
-              )}
-              <th 
-                style={{ 
-                  border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                  width: `${tableSettings.columnWidths[0]}px`, 
-                  position: 'relative',
-                  color: getSortIndicatorColor(-1)
-                }}
-                onClick={() => handleSort(-1)}
-              >
-                {columnLabel}
-                <div
-                  style={{
-                    display: 'inline-block',
-                    width: '5px',
-                    height: '100%',
-                    cursor: 'col-resize',
-                    position: 'absolute',
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                  }}
-                  onMouseDown={(e) => handleMouseDown({ e, index: 0, startWidth: tableSettings.columnWidths[0], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                />
-              </th>
-              {titles.map((title, index) => (
-                <React.Fragment key={index}>
-                  {tableSettings.showValueColumns && (
-                    <th 
-                      style={{ 
-                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                        width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
-                        position: 'relative',
-                        color: getSortIndicatorColor(index)
-                      }}
-                      onClick={() => handleSort(index)}
-                    >
-                      {title} Value
-                      <div
-                        style={{
-                          display: 'inline-block',
-                          width: '5px',
-                          height: '100%',
-                          cursor: 'col-resize',
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                        }}
-                        onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 1, startWidth: tableSettings.columnWidths[index * 3 + 1], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                      />
-                    </th>
-                  )}
-                  {tableSettings.showBarCharts && (
-                    <th 
-                      style={{ 
-                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                        width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
-                        position: 'relative',
-                        color: getSortIndicatorColor(index)
-                      }}
-                      onClick={() => handleSort(index)}
-                    >
-                      {title} Bar Chart
-                      <div
-                        style={{
-                          display: 'inline-block',
-                          width: '5px',
-                          height: '100%',
-                          cursor: 'col-resize',
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                        }}
-                        onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 2, startWidth: tableSettings.columnWidths[index * 3 + 2], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                      />
-                    </th>
-                  )}
-                  {tableSettings.showLineCharts && (
-                    <th 
-                      className="chart-cell" 
-                      style={{ 
-                        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                        width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
-                        position: 'relative', 
-                        padding: '15px',
-                        color: getSortIndicatorColor(index)
-                      }}
-                      onClick={() => handleSort(index)}
-                    >
-                      {title} Sparkline
-                      <div
-                        style={{
-                          display: 'inline-block',
-                          width: '5px',
-                          height: '100%',
-                          cursor: 'col-resize',
-                          position: 'absolute',
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                        }}
-                        onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 3, startWidth: tableSettings.columnWidths[index * 3 + 3], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                      />
-                    </th>
-                  )}
-                </React.Fragment>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {groupLabels.map((label, rowIndex) => (
-              <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
-                {tableSettings.showRowNumbers && (
-                  <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
-                )}
-                <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
-                {lists[rowIndex].map((values, colIndex) => (
-                  <React.Fragment key={colIndex}>
+                {titles.map((title, index) => (
+                  <React.Fragment key={index}>
                     {tableSettings.showValueColumns && (
-                      renderValueCell(values, colIndex, rowIndex, settings?.aggregationMethod ?? 'sum')
+                      <th 
+                        style={{ 
+                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                          width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
+                          position: 'relative',
+                          fontFamily: tableSettings.headerFontFamily,
+                          fontSize: `${tableSettings.headerFontSize}px`,
+                          color: tableSettings.headerFontColor,
+                          padding: '15px',
+                        }}
+                        onClick={() => handleSort(index)}
+                      >
+                        {title} Value
+                        <div
+                          style={{
+                            display: 'inline-block',
+                            width: '5px',
+                            height: '100%',
+                            cursor: 'col-resize',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                          }}
+                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 1, startWidth: tableSettings.columnWidths[index * 3 + 1], columnWidths: tableSettings.columnWidths, setTableSettings })}
+                        />
+                      </th>
                     )}
                     {tableSettings.showBarCharts && (
-                      <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
-                        {renderChartCell(values[0], getMaxValueInColumn(lists, colIndex))}
-                      </td>
+                      <th 
+                        style={{ 
+                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                          width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
+                          position: 'relative',
+                          fontFamily: tableSettings.headerFontFamily,
+                          fontSize: `${tableSettings.headerFontSize}px`,
+                          color: tableSettings.headerFontColor
+                        }}
+                        onClick={() => handleSort(index)}
+                      >
+                        {title} Bar Chart
+                        <div
+                          style={{
+                            display: 'inline-block',
+                            width: '5px',
+                            height: '100%',
+                            cursor: 'col-resize',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                          }}
+                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 2, startWidth: tableSettings.columnWidths[index * 3 + 2], columnWidths: tableSettings.columnWidths, setTableSettings })}
+                        />
+                      </th>
                     )}
                     {tableSettings.showLineCharts && (
-                      <td 
+                      <th 
                         className="chart-cell" 
-                        style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px`, padding: '0 15px' }}
-                        onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
-                        onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
-                        onMouseLeave={handleSparklineLeave}
-                        onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                        style={{ 
+                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+                          width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
+                          position: 'relative', 
+                          fontFamily: tableSettings.headerFontFamily,
+                          fontSize: `${tableSettings.headerFontSize}px`,
+                          color: tableSettings.headerFontColor,
+                          padding: '15px',
+                        }}
+                        onClick={() => handleSort(index)}
                       >
-                        {renderSparkline(values, dates[rowIndex], colIndex)}
-                      </td>
+                        {title} Sparkline
+                        <div
+                          style={{
+                            display: 'inline-block',
+                            width: '5px',
+                            height: '100%',
+                            cursor: 'col-resize',
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                          }}
+                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 3, startWidth: tableSettings.columnWidths[index * 3 + 3], columnWidths: tableSettings.columnWidths, setTableSettings })}
+                        />
+                      </th>
                     )}
                   </React.Fragment>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {groupLabels.map((label, rowIndex) => (
+                <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
+                  {tableSettings.showRowNumbers && (
+                    <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: '50px' }}>{rowIndex + 1}</td>
+                  )}
+                  <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[0]}px` }}>{label}</td>
+                  {lists[rowIndex].map((values, colIndex) => (
+                    <React.Fragment key={colIndex}>
+                      {tableSettings.showValueColumns && (
+                        renderValueCell(values, colIndex, rowIndex, settings?.aggregationMethod ?? 'sum')
+                      )}
+                      {tableSettings.showBarCharts && (
+                        <td style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 2]}px`, position: 'relative' }}>
+                          {renderChartCell(values[0], getMaxValueInColumn(lists, colIndex))}
+                        </td>
+                      )}
+                      {tableSettings.showLineCharts && (
+                        <td 
+                          className="chart-cell" 
+                          style={{ border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, width: `${tableSettings.columnWidths[colIndex * 3 + 3]}px`, padding: '0 15px' }}
+                          onMouseEnter={(e) => handleSparklineHover(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                          onMouseMove={(e) => handleSparklineMove(values, dates[rowIndex], colIndex, `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                          onMouseLeave={handleSparklineLeave}
+                          onContextMenu={(e) => handleSparklineRightClick(e, values, dates[rowIndex], `${groupLabels[rowIndex]} ${titles[colIndex]}`, e.currentTarget.getBoundingClientRect().left, e.currentTarget.getBoundingClientRect().top)}
+                        >
+                          {renderSparkline(values, dates[rowIndex], colIndex)}
+                        </td>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default AdvancedTable;
