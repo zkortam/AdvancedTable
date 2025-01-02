@@ -10,9 +10,36 @@
   "settings": [
     {
       "name": {
-        "key": "Table Appearance"
+        "key": "STYLE & APPEARANCE"
       },
       "settings": [
+        {
+          "name": {
+            "key": "Show Value Columns"
+          },
+          "key": "showValueColumns",
+          "type": "boolean",
+          "hint": "Toggle the visibility of value columns",
+          "defaultValue": true
+        },
+        {
+          "name": {
+            "key": "Show Bar Charts"
+          },
+          "key": "showBarCharts",
+          "type": "boolean",
+          "hint": "Toggle the visibility of bar charts",
+          "defaultValue": false
+        },
+        {
+          "name": {
+            "key": "Show Line Charts"
+          },
+          "key": "showLineCharts",
+          "type": "boolean",
+          "hint": "Toggle the visibility of line charts",
+          "defaultValue": false
+        },
         {
           "name": {
             "key": "Table Border Radius"
@@ -20,7 +47,7 @@
           "key": "tableBorderRadius",
           "type": "number",
           "hint": "Select the border radius for the table (px)",
-          "default": 0
+          "defaultValue": 0
         },
         {
           "name": {
@@ -37,7 +64,7 @@
           "key": "tableBorderWidth",
           "type": "number",
           "hint": "Select the border thickness for the table (px)",
-          "default": 2
+          "defaultValue": 2
         },
         {
           "name": {
@@ -46,7 +73,7 @@
           "key": "alternatingRowColors",
           "type": "boolean",
           "hint": "Toggle alternating row colors",
-          "default": false
+          "defaultValue": false
         },
         {
           "name": {
@@ -55,7 +82,46 @@
           "key": "showRowNumbers",
           "type": "boolean",
           "hint": "Toggle the visibility of row numbers",
-          "default": false
+          "defaultValue": false
+        },
+        {
+          "name": {
+            "key": "Font Family (Headers)"
+          },
+          "key": "headerFontFamily",
+          "type": "dropdown",
+          "options": [
+            { "key": "Arial", "label": "Arial" },
+            { "key": "Helvetica", "label": "Helvetica" },
+            { "key": "Verdana", "label": "Verdana" },
+            { "key": "Tahoma", "label": "Tahoma" },
+            { "key": "Times New Roman", "label": "Times New Roman" },
+            { "key": "Georgia", "label": "Georgia" },
+            { "key": "Garamond", "label": "Garamond" },
+            { "key": "Courier New", "label": "Courier New" },
+            { "key": "Lucida Sans", "label": "Lucida Sans" },
+            { "key": "Roboto", "label": "Roboto" }
+          ],
+          "hint": "Select the font family for table headers",
+          "defaultValue": "Arial"
+        },
+        {
+          "name": {
+            "key": "Font Size (Headers)"
+          },
+          "key": "headerFontSize",
+          "type": "number",
+          "hint": "Select the font size for table headers (px)",
+          "defaultValue": 14
+        },
+        {
+          "name": {
+            "key": "Font Color (Headers)"
+          },
+          "key": "headerFontColor",
+          "type": "color",
+          "hint": "Select the font color for table headers",
+          "defaultValue": "#000000"
         }
       ]
     },
@@ -71,7 +137,7 @@
           "key": "barRounding",
           "type": "number",
           "hint": "Select the rounding radius for the bar (px)",
-          "default": 1
+          "defaultValue": 10
         },
         {
           "name": {
@@ -80,7 +146,7 @@
           "key": "positiveBarColor",
           "type": "color",
           "hint": "Select the color for positive bar values",
-          "default": "#00FF00"
+          "defaultValue": "#00FF00"
         },
         {
           "name": {
@@ -89,7 +155,7 @@
           "key": "negativeBarColor",
           "type": "color",
           "hint": "Select the color for negative bar values",
-          "default": "#FF0000"
+          "defaultValue": "#FF0000"
         },
         {
           "name": {
@@ -98,41 +164,7 @@
           "key": "sparklineColor",
           "type": "color",
           "hint": "Select the color for sparklines",
-          "default": "blue"
-        },
-        {
-          "name": {
-            "key": "Show Bar Charts"
-          },
-          "key": "showBarCharts",
-          "type": "boolean",
-          "hint": "Toggle the visibility of bar charts",
-          "default": false
-        },
-        {
-          "name": {
-            "key": "Show Line Charts"
-          },
-          "key": "showLineCharts",
-          "type": "boolean",
-          "hint": "Toggle the visibility of line charts",
-          "default": false
-        }
-      ]
-    },
-    {
-      "name": {
-        "key": "Column Settings"
-      },
-      "settings": [
-        {
-          "name": {
-            "key": "Show Value Columns"
-          },
-          "key": "showValueColumns",
-          "type": "boolean",
-          "hint": "Toggle the visibility of value columns",
-          "default": true
+          "defaultValue": "blue"
         }
       ]
     }
@@ -141,7 +173,7 @@
     {
       "key": "tray-key-dim-1",
       "name": {
-        "key": "BreakBy (First Value)"
+        "key": "GROUPING DIMENSION"
       },
       "queryRole": "row",
       "minCount": 1,
@@ -150,7 +182,7 @@
     {
       "key": "tray-key-dim-2",
       "name": {
-        "key": "BreakBy (Time)"
+        "key": "TIME"
       },
       "queryRole": "row",
       "minCount": 1,
@@ -170,50 +202,11 @@
           "settings": [
             {
               "name": {
-                "key": "Scale"
-              },
-              "key": "scale1",
-              "type": "scale"
-            },
-            {
-              "name": {
                 "key": "Format"
               },
               "key": "format",
               "type": "number-format",
               "defaultValue": "###,###"
-            },
-            {
-              "name": {
-                "key": "Color"
-              },
-              "key": "color",
-              "type": "color"
-            },
-            {
-              "name": {
-                "key": "Transparency"
-              },
-              "key": "transparency",
-              "type": "number",
-              "defaultValue": 70
-            }
-          ]
-        },
-        {
-          "name": {
-            "key": "Conditional Formatting"
-          },
-          "settings": [
-            {
-              "name": "Conditions",
-              "key": "conditions",
-              "type": "conditional-formatting",
-              "uiControlOptions": {
-                "labels": {
-                  "backgroundColor": "Text color"
-                }
-              }
             }
           ]
         }
