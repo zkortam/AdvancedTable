@@ -31,7 +31,7 @@ export const handleMouseDown = ({
   index,
   startWidth,
   columnWidths,
-  setTableSettings
+  setTableSettings,
 }: HandleMouseDownProps) => {
   e.preventDefault();
   const startX = e.clientX;
@@ -42,7 +42,7 @@ export const handleMouseDown = ({
     newColumnWidths[index] = newWidth;
     setTableSettings((prevSettings: any) => ({
       ...prevSettings,
-      columnWidths: newColumnWidths
+      columnWidths: newColumnWidths,
     }));
   };
 
@@ -79,17 +79,35 @@ export const initializeState = (
   setDates: React.Dispatch<React.SetStateAction<string[][]>>,
   context: IncortaContext<IncortaTContext>
 ): { initialLists: number[][][], initialGroupLabels: (string | number)[] } => {
-  if (data && data.colHeaders?.[0]?.label) {
-    setColumnLabel(data.colHeaders[0].label);
+  // Extensive logging for `rowHeaders`
+  console.log("Full data object:", data);
+  console.log("rowHeaders field in data:", data.rowHeaders);
+
+  // Check if `rowHeaders` is an array with at least one item
+  if (Array.isArray(data.rowHeaders) && data.rowHeaders.length > 0) {
+    console.log("rowHeaders is an array. Accessing the first item...");
+    const firstHeader = data.rowHeaders[0]; // Access the first grouping dimension
+
+    if (firstHeader?.label) {
+      console.log("Found label in the first rowHeader:", firstHeader.label);
+      const groupingLabel = firstHeader.label || "Category"; // Use the label directly
+      setColumnLabel(groupingLabel);
+    } else {
+      console.warn("The first rowHeader does not contain a label. Defaulting to 'Category'.");
+      setColumnLabel("Category");
+    }
+  } else {
+    console.error("rowHeaders is not an array or is empty. Defaulting to 'Category'.");
+    setColumnLabel("Category");
   }
 
-  const defaultDatePart = settings?.defaultDatePart || 'Month';
-
+  // Default behavior for Group Labels
   const stateLabels = Array.from(new Set(data.data.map(row => row[0]?.value)));
   setGroupLabels(stateLabels);
 
   const numberOfLists = Math.min(data.measureHeaders.length, 50);
 
+  // Process the value columns
   const initialLists: number[][][] = stateLabels.map(state => {
     const filteredRows = data.data.filter(row => row[0]?.value === state);
     return Array.from({ length: numberOfLists }, (_, i) => {
@@ -106,16 +124,19 @@ export const initializeState = (
   setLists(initialLists);
   setDates(initialDates);
 
+  // Process value column headers (measure headers)
   const headers = data.measureHeaders.map(header => {
     const parts = header.label.split('.');
     return parts[parts.length - 1] || "Data";
   });
   setTitles(headers.slice(0, 50));
 
-  if (data && data.measureHeaders?.[0]?.label) {
+  // Process the value label
+  if (data.measureHeaders?.[0]?.label) {
     setValueLabel(data.measureHeaders[0].label);
   }
 
+  // Apply table settings
   if (settings) {
     setTableSettings({
       tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
@@ -127,11 +148,18 @@ export const initializeState = (
       showBarCharts: settings.showBarCharts ?? false,
       showRowNumbers: settings.showRowNumbers ?? false,
       tableBorderWidth: settings.tableBorderWidth ?? 2,
-      datePart: defaultDatePart,
+      datePart: settings?.defaultDatePart || 'Month',
       positiveBarColor: settings.positiveBarColor ?? '#62BB9A',
       negativeBarColor: settings.negativeBarColor ?? '#FF0000',
-      barRounding: settings.barRounding ?? 10,  // Updated here
-      sparklineColor: settings.sparklineColor ?? 'blue'
+      barRounding: settings.barRounding ?? 10,
+      sparklineColor: settings.sparklineColor ?? 'blue',
+      // New font settings
+      valueFontFamily: settings.valueFontFamily || 'Arial',
+      valueFontSize: settings.valueFontSize || 14, // Default to 14px
+      valueFontColor: settings.valueFontColor || '#000000',
+      headerFontFamily: settings.headerFontFamily || 'Arial',
+      headerFontSize: settings.headerFontSize || 14, // Default to 14px
+      headerFontColor: settings.headerFontColor ?? '#000000',
     });
   }
 
