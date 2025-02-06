@@ -460,139 +460,162 @@ const AdvancedTable: React.FC<Props> = ({ context, prompts, data, drillDown }) =
             style={{ borderColor: tableSettings.tableBorderColor, borderRadius: `${tableSettings.tableBorderRadius}px`, borderWidth: `${tableSettings.tableBorderWidth}px`, borderCollapse: 'collapse' }}
           >
             <thead>
-              <tr>
-                {tableSettings.showRowNumbers && (
-                  <th 
-                    style={{ 
-                      border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                      width: '50px', 
-                      position: 'relative',
-                      color: getSortIndicatorColor(0)
-                    }}
-                    onClick={() => handleSort(0)}
-                  >
-                    #
-                  </th>
-                )}
-                <th 
-                  style={{ 
-                    border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                    width: `${tableSettings.columnWidths[0]}px`, 
-                    position: 'relative',
-                    fontFamily: tableSettings.headerFontFamily,
-                    fontSize: `${tableSettings.headerFontSize}px`,
-                    color: tableSettings.headerFontColor
-                  }}
-                  onClick={() => handleSort(-1)}
-                >
-                  {columnLabel}
-                  <div
-                    style={{
-                      display: 'inline-block',
-                      width: '5px',
-                      height: '100%',
-                      cursor: 'col-resize',
-                      position: 'absolute',
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                    }}
-                    onMouseDown={(e) => handleMouseDown({ e, index: 0, startWidth: tableSettings.columnWidths[0], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                  />
-                </th>
-                {titles.map((title, index) => (
-                  <React.Fragment key={index}>
-                    {tableSettings.showValueColumns && (
-                      <th 
-                        style={{ 
-                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                          width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
-                          position: 'relative',
-                          fontFamily: tableSettings.headerFontFamily,
-                          fontSize: `${tableSettings.headerFontSize}px`,
-                          color: tableSettings.headerFontColor,
-                          padding: '15px',
-                        }}
-                        onClick={() => handleSort(index)}
-                      >
-                        {title} Value
-                        <div
-                          style={{
-                            display: 'inline-block',
-                            width: '5px',
-                            height: '100%',
-                            cursor: 'col-resize',
-                            position: 'absolute',
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                          }}
-                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 1, startWidth: tableSettings.columnWidths[index * 3 + 1], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                        />
-                      </th>
-                    )}
-                    {tableSettings.showBarCharts && (
-                      <th 
-                        style={{ 
-                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                          width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
-                          position: 'relative',
-                          fontFamily: tableSettings.headerFontFamily,
-                          fontSize: `${tableSettings.headerFontSize}px`,
-                          color: tableSettings.headerFontColor
-                        }}
-                        onClick={() => handleSort(index)}
-                      >
-                        {title} Bar Chart
-                        <div
-                          style={{
-                            display: 'inline-block',
-                            width: '5px',
-                            height: '100%',
-                            cursor: 'col-resize',
-                            position: 'absolute',
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                          }}
-                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 2, startWidth: tableSettings.columnWidths[index * 3 + 2], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                        />
-                      </th>
-                    )}
-                    {tableSettings.showLineCharts && (
-                      <th 
-                        className="chart-cell" 
-                        style={{ 
-                          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
-                          width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
-                          position: 'relative', 
-                          fontFamily: tableSettings.headerFontFamily,
-                          fontSize: `${tableSettings.headerFontSize}px`,
-                          color: tableSettings.headerFontColor,
-                          padding: '15px',
-                        }}
-                        onClick={() => handleSort(index)}
-                      >
-                        {title} Sparkline
-                        <div
-                          style={{
-                            display: 'inline-block',
-                            width: '5px',
-                            height: '100%',
-                            cursor: 'col-resize',
-                            position: 'absolute',
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                          }}
-                          onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 3, startWidth: tableSettings.columnWidths[index * 3 + 3], columnWidths: tableSettings.columnWidths, setTableSettings })}
-                        />
-                      </th>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tr>
-            </thead>
+  <tr>
+    {tableSettings.showRowNumbers && (
+      <th 
+        style={{ 
+          border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+          width: '50px', 
+          position: 'relative'
+        }}
+      >
+        #
+      </th>
+    )}
+    <th 
+      style={{ 
+        border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+        width: `${tableSettings.columnWidths[0]}px`, 
+        position: 'relative',
+        fontFamily: tableSettings.headerFontFamily,
+        fontSize: `${tableSettings.headerFontSize}px`,
+        color: tableSettings.headerFontColor,
+        cursor: 'pointer'
+      }}
+      onClick={() => handleSort(-1)} // Sort for row label (grouping dimension)
+    >
+      {columnLabel}
+      {sortState.column === -1 && (
+        <span style={{ marginLeft: '5px' }}>
+          {sortState.order === 'asc' ? '↑' : '↓'}
+        </span>
+      )}
+      <div
+        style={{
+          display: 'inline-block',
+          width: '5px',
+          height: '100%',
+          cursor: 'col-resize',
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+        }}
+        onMouseDown={(e) => handleMouseDown({ e, index: 0, startWidth: tableSettings.columnWidths[0], columnWidths: tableSettings.columnWidths, setTableSettings })}
+      />
+    </th>
+    {titles.map((title, index) => (
+      <React.Fragment key={index}>
+        {tableSettings.showValueColumns && (
+          <th 
+            style={{ 
+              border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+              width: `${tableSettings.columnWidths[index * 3 + 1]}px`, 
+              position: 'relative',
+              fontFamily: tableSettings.headerFontFamily,
+              fontSize: `${tableSettings.headerFontSize}px`,
+              color: tableSettings.headerFontColor,
+              padding: '15px',
+              cursor: 'pointer'
+            }}
+            onClick={() => handleSort(index)} // Sorting for measure columns
+          >
+            {title} Value
+            {sortState.column === index && (
+              <span style={{ marginLeft: '5px' }}>
+                {sortState.order === 'asc' ? '↑' : '↓'}
+              </span>
+            )}
+            <div
+              style={{
+                display: 'inline-block',
+                width: '5px',
+                height: '100%',
+                cursor: 'col-resize',
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+              }}
+              onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 1, startWidth: tableSettings.columnWidths[index * 3 + 1], columnWidths: tableSettings.columnWidths, setTableSettings })}
+            />
+          </th>
+        )}
+        {tableSettings.showBarCharts && (
+          <th 
+            style={{ 
+              border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+              width: `${tableSettings.columnWidths[index * 3 + 2]}px`, 
+              position: 'relative',
+              fontFamily: tableSettings.headerFontFamily,
+              fontSize: `${tableSettings.headerFontSize}px`,
+              color: tableSettings.headerFontColor,
+              cursor: 'pointer'
+            }}
+            onClick={() => handleSort(index)} // Sorting for bar charts
+          >
+            {title} Bar Chart
+            {sortState.column === index && (
+              <span style={{ marginLeft: '5px' }}>
+                {sortState.order === 'asc' ? '↑' : '↓'}
+              </span>
+            )}
+            <div
+              style={{
+                display: 'inline-block',
+                width: '5px',
+                height: '100%',
+                cursor: 'col-resize',
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+              }}
+              onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 2, startWidth: tableSettings.columnWidths[index * 3 + 2], columnWidths: tableSettings.columnWidths, setTableSettings })}
+            />
+          </th>
+        )}
+        {tableSettings.showLineCharts && (
+          <th 
+            className="chart-cell" 
+            style={{ 
+              border: `${tableSettings.tableBorderWidth}px solid ${tableSettings.tableBorderColor}`, 
+              width: `${tableSettings.columnWidths[index * 3 + 3]}px`, 
+              position: 'relative', 
+              fontFamily: tableSettings.headerFontFamily,
+              fontSize: `${tableSettings.headerFontSize}px`,
+              color: tableSettings.headerFontColor,
+              padding: '15px',
+              cursor: 'pointer'
+            }}
+            onClick={() => handleSort(index)} // Sorting for line charts
+          >
+            {title} Sparkline
+            {sortState.column === index && (
+              <span style={{ marginLeft: '5px' }}>
+                {sortState.order === 'asc' ? '↑' : '↓'}
+              </span>
+            )}
+            <div
+              style={{
+                display: 'inline-block',
+                width: '5px',
+                height: '100%',
+                cursor: 'col-resize',
+                position: 'absolute',
+                right: 0,
+                top: 0,
+                bottom: 0,
+              }}
+              onMouseDown={(e) => handleMouseDown({ e, index: index * 3 + 3, startWidth: tableSettings.columnWidths[index * 3 + 3], columnWidths: tableSettings.columnWidths, setTableSettings })}
+            />
+          </th>
+        )}
+      </React.Fragment>
+    ))}
+  </tr>
+</thead>
+
             <tbody>
               {groupLabels.map((label, rowIndex) => (
                 <tr key={label} style={{ backgroundColor: tableSettings.alternatingRowColors && rowIndex % 2 === 0 ? 'lightgrey' : 'white' }}>
