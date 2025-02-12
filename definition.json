@@ -9,85 +9,58 @@
   },
   "settings": [
     {
-      "name": {
-        "key": "STYLE & APPEARANCE"
-      },
+      "name": { "key": "STYLE & APPEARANCE" },
       "settings": [
         {
-          "name": {
-            "key": "Show Value Columns"
-          },
+          "name": { "key": "Show Value Columns" },
           "key": "showValueColumns",
           "type": "boolean",
           "hint": "Toggle the visibility of value columns",
           "defaultValue": true
         },
         {
-          "name": {
-            "key": "Show Bar Charts"
-          },
+          "name": { "key": "Show Bar Charts" },
           "key": "showBarCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of bar charts",
           "defaultValue": false
         },
         {
-          "name": {
-            "key": "Show Line Charts"
-          },
+          "name": { "key": "Show Line Charts" },
           "key": "showLineCharts",
           "type": "boolean",
           "hint": "Toggle the visibility of line charts",
           "defaultValue": false
         },
         {
-          "name": {
-            "key": "Table Border Radius"
-          },
-          "key": "tableBorderRadius",
-          "type": "number",
-          "hint": "Select the border radius for the table (px)",
-          "defaultValue": 0
-        },
-        {
-          "name": {
-            "key": "Table Border Color"
-          },
+          "name": { "key": "Table Border Color" },
           "key": "tableBorderColor",
           "type": "color",
           "hint": "Select the border color for the table"
         },
         {
-          "name": {
-            "key": "Table Border Thickness"
-          },
+          "name": { "key": "Table Border Thickness" },
           "key": "tableBorderWidth",
           "type": "number",
           "hint": "Select the border thickness for the table (px)",
-          "defaultValue": 2
+          "defaultValue": 1
         },
         {
-          "name": {
-            "key": "Alternating Row Colors"
-          },
+          "name": { "key": "Alternating Row Colors" },
           "key": "alternatingRowColors",
           "type": "boolean",
           "hint": "Toggle alternating row colors",
           "defaultValue": false
         },
         {
-          "name": {
-            "key": "Show Row Numbers"
-          },
+          "name": { "key": "Show Row Numbers" },
           "key": "showRowNumbers",
           "type": "boolean",
           "hint": "Toggle the visibility of row numbers",
           "defaultValue": false
         },
         {
-          "name": {
-            "key": "Font Family (Headers)"
-          },
+          "name": { "key": "Font Family (Headers)" },
           "key": "headerFontFamily",
           "type": "dropdown",
           "options": [
@@ -106,18 +79,14 @@
           "defaultValue": "Arial"
         },
         {
-          "name": {
-            "key": "Font Size (Headers)"
-          },
+          "name": { "key": "Font Size (Headers)" },
           "key": "headerFontSize",
           "type": "number",
           "hint": "Select the font size for table headers (px)",
-          "defaultValue": 14
+          "defaultValue": 12
         },
         {
-          "name": {
-            "key": "Font Color (Headers)"
-          },
+          "name": { "key": "Font Color (Headers)" },
           "key": "headerFontColor",
           "type": "color",
           "hint": "Select the font color for table headers",
@@ -126,41 +95,31 @@
       ]
     },
     {
-      "name": {
-        "key": "Chart Settings"
-      },
+      "name": { "key": "Chart Settings" },
       "settings": [
         {
-          "name": {
-            "key": "Bar Rounding"
-          },
+          "name": { "key": "Bar Rounding" },
           "key": "barRounding",
           "type": "number",
           "hint": "Select the rounding radius for the bar (px)",
           "defaultValue": 10
         },
         {
-          "name": {
-            "key": "Positive Bar Color"
-          },
+          "name": { "key": "Positive Bar Color" },
           "key": "positiveBarColor",
           "type": "color",
           "hint": "Select the color for positive bar values",
           "defaultValue": "#00FF00"
         },
         {
-          "name": {
-            "key": "Negative Bar Color"
-          },
+          "name": { "key": "Negative Bar Color" },
           "key": "negativeBarColor",
           "type": "color",
           "hint": "Select the color for negative bar values",
           "defaultValue": "#FF0000"
         },
         {
-          "name": {
-            "key": "Sparkline Color"
-          },
+          "name": { "key": "Sparkline Color" },
           "key": "sparklineColor",
           "type": "color",
           "hint": "Select the color for sparklines",
@@ -172,41 +131,53 @@
   "bindingsTrays": [
     {
       "key": "tray-key-dim-1",
-      "name": {
-        "key": "GROUPING DIMENSION"
-      },
+      "name": { "key": "GROUPING DIMENSION" },
       "queryRole": "row",
       "minCount": 1,
       "maxCount": 1
     },
     {
       "key": "tray-key-dim-2",
-      "name": {
-        "key": "TIME"
-      },
+      "name": { "key": "TIME" },
       "queryRole": "row",
       "minCount": 1,
       "maxCount": 1
     },
     {
       "key": "tray-key",
-      "name": {
-        "key": "Measures"
-      },
+      "name": { "key": "Measures" },
       "queryRole": "measure",
       "settings": [
         {
-          "name": {
-            "key": "Number Format"
-          },
+          "name": "Customization",
           "settings": [
             {
-              "name": {
-                "key": "Format"
-              },
+              "name": "Format",
               "key": "format",
               "type": "number-format",
-              "defaultValue": "###,###"
+              "defaultValue": "###,##0.00"
+            }
+          ]
+        },
+        {
+          "name": "Conditional Formatting",
+          "settings": [
+            {
+              "name": "cond",
+              "type": "conditional-formatting",
+              "key": "cond",
+              "uiControlOptions": {
+                "show": {
+                  "color": {
+                    "defaultValue": "red",
+                    "label": "Custom Label"
+                  },
+                  "backgroundColor": {
+                    "defaultValue": "#FFFFFF",
+                    "label": "Background Color"
+                  }
+                }
+              }
             }
           ]
         }
