@@ -1,60 +1,91 @@
-@headerColor: #f2f2f2; // Default header color
-@rowColor: #ffffff; // Default row color
-@tableBorderRadius: 1px; // Default table border radius
-@tableBorderColor: #A9A9A9; // Default table border color
+/* Updated styles.less */
 
+/* Design Tokens */
+@headerColor: #f5f5f5;           // Header row background (light grey)
+@rowColorEven: #ffffff;          // Even row background
+@rowColorOdd:  #f5f5f5;           // Odd row background
+@tableBorderRadius: 10px;        // Rounded corners set to 10px
+@tableBorderColor: #cfd5da;       // Lighter divider color matching inline styles
+@tableBorderWidth: 0.5px;         // Reduced divider thickness
+
+/* Advanced Table Styling */
 .advanced-table {
-  overflow: hidden;
-  border-radius: @tableBorderRadius;
-  border: 2px solid @tableBorderColor;
+  /* Remove all outer borders */
+  border: none;
   width: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   position: relative;
 
   table {
-    border-collapse: separate;
-    border-spacing: 0;
     width: 100%;
-    border-radius: @tableBorderRadius;
-    overflow: hidden;
+    border-collapse: collapse;
+    border-spacing: 0;
 
-    th, td {
-      border: 2px solid @tableBorderColor;
-      position: relative;
-      padding: 8px;
-      text-align: left;
-      background-clip: padding-box; // Ensure the background is clipped to the padding box
+    thead {
+      tr {
+        background-color: @headerColor; 
+        /* Draw a subtle horizontal border below the header row */
+        border-bottom: @tableBorderWidth solid @tableBorderColor;
+        height: 28px;  /* Adjust header row height as needed */
+      }
+      th {
+        padding: 4px 8px;            /* Reduced padding for a compact look */
+        text-align: left;
+        background-color: inherit;   /* Use the header row's light grey background */
+        color: #21314D;              // Updated header font color
+        font-weight: 600;            // Updated header font weight
+        font-family: Arial, sans-serif;
+        font-size: 12px;             // Updated header font size
+        /* Add a vertical divider on the right side of every header cell */
+        border-right: @tableBorderWidth solid @tableBorderColor;
+        border-top: 0;
+        border-bottom: 0;
+      }
+      /* Remove the left border from the first header cell */
+      th:first-child {
+        border-left: 0;
+      }
+      /* Remove the right border from the last header cell */
+      th:last-child {
+        border-right: 0;
+      }
     }
 
-    th {
-      background-color: @headerColor;
-    }
-
-    tr:nth-child(even) {
-      background-color: @rowColor;
-    }
-
-    // Ensure rounded corners for the table
-    tr:first-child th:first-child {
-      border-top-left-radius: @tableBorderRadius;
-    }
-
-    tr:first-child th:last-child {
-      border-top-right-radius: @tableBorderRadius;
-    }
-
-    tr:last-child td:first-child {
-      border-bottom-left-radius: @tableBorderRadius;
-    }
-
-    tr:last-child td:last-child {
-      border-bottom-right-radius: @tableBorderRadius;
+    tbody {
+      tr {
+        &:nth-child(even) {
+          background-color: @rowColorEven;
+        }
+        &:nth-child(odd) {
+          background-color: @rowColorOdd;
+        }
+        td {
+          padding: 8px;
+          text-align: left;
+          /* Add a subtle vertical right border between columns */
+          border-right: @tableBorderWidth solid @tableBorderColor;
+          border-top: 0;
+          border-bottom: 0;
+        }
+        td:first-child {
+          /* For the first (grouping) column, add subtle horizontal borders */
+          border-top: @tableBorderWidth solid @tableBorderColor;
+          border-bottom: @tableBorderWidth solid @tableBorderColor;
+          border-right: @tableBorderWidth solid @tableBorderColor;
+          border-left: 0;  /* Remove left border */
+        }
+        td:last-child {
+          /* Remove the right border from the last cell */
+          border-right: 0;
+        }
+      }
     }
   }
 
   .resizer {
     display: inline-block;
-    width: 5px;
+    width: 2px;      // Reduced divider width for a less pronounced separator
     height: 50px;
     cursor: col-resize;
     position: absolute;
@@ -75,8 +106,8 @@
     align-items: center;
     position: relative;
     height: 20px;
-    width: 100%; /* Ensure it takes the full width of the cell */
-    overflow: hidden; /* Hide any overflow */
+    width: 100%;
+    overflow: hidden;
   }
 
   .bar {
@@ -84,10 +115,11 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    border-radius: 10px; // Example rounding, can be customized
+    border-radius: 0;
   }
 }
 
+/* Modal Styles */
 .modal {
   position: fixed;
   top: 0;
@@ -135,6 +167,7 @@
   }
 }
 
+/* Sort Modal Styles */
 .sort-modal {
   position: absolute;
   background-color: white;
@@ -155,6 +188,7 @@
   }
 }
 
+/* Chart Popup Styles */
 .chart-popup {
   position: fixed;
   top: 50%;
@@ -162,8 +196,8 @@
   width: 400px;
   height: 200px;
   background-color: white;
-  border: 2px solid @tableBorderColor;
-  border-radius: @tableBorderRadius;
+  border: @tableBorderWidth solid @tableBorderColor;
+  border-radius: 0;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   padding: 20px;
