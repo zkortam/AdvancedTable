@@ -1,21 +1,118 @@
 import { ResponseData, Context as IncortaContext, TContext as IncortaTContext } from '@incorta-org/component-sdk';
 import React from 'react';
+import numbro from 'numbro';
 
-export const formatNumber = (num: number): string => {
+const MAX_MANTISSA = 10; // Adjust this value as needed
+
+/**
+ * Advanced formatting function using numbro.
+ * @param num - The number to format.
+ * @param format - A format string (for example: "###,##0.00").
+ * @returns A formatted string.
+ */
+export const formatNumber = (num: number, format?: string): string => {
+  // Parse the format string to get formatting options
+  const numberFormatOptions = getFormatOptions(format);
+  const isCustomRound = true;
+  // Set this flag to true if you want to force average formatting; otherwise false.
+  const showNumberScale = false; 
+
+  const { 
+    decimalPlaces, 
+    isThousandsSeparated = false, 
+    prefix = '', 
+    suffix = '', 
+    isPercent = false 
+  } = numberFormatOptions ?? {};
+
+  const showAverage = showNumberScale !== false;
+  // Use 'any' for numbroOptions since numbro doesn't export an Options type.
+  const numbroOptions: any = {
+    prefix: prefix,
+    postfix: suffix,
+    thousandSeparated: isThousandsSeparated,
+    output: isPercent ? 'percent' : 'number',
+    average: showAverage
+  };
+
   const absNum = Math.abs(num);
-  let formattedNum;
 
-  if (absNum >= 1e9) {
-    formattedNum = (num / 1e9).toFixed(2) + 'B';
-  } else if (absNum >= 1e6) {
-    formattedNum = (num / 1e6).toFixed(2) + 'M';
-  } else if (absNum >= 1e3) {
-    formattedNum = (num / 1e3).toFixed(2) + 'K';
-  } else {
-    formattedNum = num.toFixed(2);
+  if (decimalPlaces !== undefined) {
+    numbroOptions.mantissa = decimalPlaces;
+    if (decimalPlaces === 0 && isCustomRound) {
+      numbroOptions.trimMantissa = true;
+      if (absNum >= 0.1) {
+        numbroOptions.mantissa = 2;
+      } else if (absNum >= 0.01) {
+        numbroOptions.mantissa = 3;
+      } else if (absNum >= 0.001) {
+        numbroOptions.mantissa = 5;
+      } else if (absNum >= 0.0001) {
+        numbroOptions.mantissa = 6;
+      } else if (absNum >= 0.00001) {
+        numbroOptions.mantissa = 7;
+      } else if (absNum >= 0.000001) {
+        numbroOptions.mantissa = 8;
+      }
+    }
   }
 
-  return formattedNum.replace(/(\.0+|0+)$/, ''); // Remove unnecessary trailing zeros
+  // Fix mantissa in case decimalPlaces is undefined and we are showing average values.
+  if (decimalPlaces === undefined && showAverage) {
+    numbroOptions.mantissa = MAX_MANTISSA;
+    numbroOptions.trimMantissa = true;
+  }
+
+  // Optionally force average formatting if the number exceeds certain thresholds.
+  if (showAverage) {
+    const NumberScales = [
+      { key: 'trillion', value: 1e12 },
+      { key: 'billion', value: 1e9 },
+      { key: 'million', value: 1e6 },
+      { key: 'thousand', value: 1e3 }
+    ];
+    for (let i = 0; i < NumberScales.length; i++) {
+      if (absNum >= NumberScales[i].value) {
+        numbroOptions.forceAverage = NumberScales[i].key;
+        break;
+      }
+    }
+  }
+
+  return numbro(num).format(numbroOptions);
+};
+
+/**
+ * Parses a format string and returns an object with formatting options.
+ * @param value - The format string (e.g., "###,##0.00").
+ * @returns An object containing formatting options.
+ */
+export const getFormatOptions = (value?: string) => {
+  if (!value) {
+    // Fallback to a default format if none is provided.
+    value = '###,##0.00';
+  }
+  // Regular expression to extract parts of the format string.
+  const regex = /^('[^']+'|[^0#.%';]*)([#]*,[#]*)?([0#]*\.[0#]*)?(#*%)?('[^']+'|[^0#.%';]*)/g;
+  const result = regex.exec(value) || [];
+  const [, prefix, thousandsFormat, decimalFormat, percent, suffix] = result;
+
+  let decimalPlaces: number | undefined = 0;
+  if (decimalFormat?.length) {
+    const match = /\.(0+)/g.exec(decimalFormat);
+    decimalPlaces = match ? match[1].length : 0;
+  }
+
+  const unwrappedPrefix = prefix.replace(/'/g, '');
+  const unwrappedSuffix = suffix.replace(/'/g, '');
+
+  return {
+    decimalPlaces,
+    isThousandsSeparated: !!thousandsFormat,
+    prefix: unwrappedPrefix,
+    suffix: unwrappedSuffix,
+    isPercent: !!percent
+  };
 };
 
 interface HandleMouseDownProps {
@@ -26,6 +123,9 @@ interface HandleMouseDownProps {
   setTableSettings: React.Dispatch<React.SetStateAction<any>>;
 }
 
+/**
+ * Enables column resizing by handling mouse drag events.
+ */
 export const handleMouseDown = ({
   e,
   index,
@@ -67,6 +167,9 @@ interface Binding {
   };
 }
 
+/**
+ * Initializes state based on the incoming data.
+ */
 export const initializeState = (
   data: ResponseData,
   settings: any,
@@ -136,36 +239,42 @@ export const initializeState = (
     setValueLabel(data.measureHeaders[0].label);
   }
 
-  // Apply table settings
+  // Apply table settings with design defaults (as per the alt design)
   if (settings) {
     setTableSettings({
-      tableBorderColor: settings.tableBorderColor ?? "#A9A9A9",
+      tableBorderColor: settings.tableBorderColor ?? "#cfd5da",
       alternatingRowColors: settings.alternatingRowColors ?? false,
       columnWidths: [150, ...Array(numberOfLists * 3).fill(200)],
       tableBorderRadius: settings.tableBorderRadius ?? 0,
+      tableBorderWidth: settings.tableBorderWidth ?? 1,
       showValueColumns: settings.showValueColumns ?? true,
-      showLineCharts: settings.showLineCharts ?? false,
-      showBarCharts: settings.showBarCharts ?? false,
+      showLineCharts: settings.showLineCharts ?? true,
+      showBarCharts: settings.showBarCharts ?? true,
       showRowNumbers: settings.showRowNumbers ?? false,
-      tableBorderWidth: settings.tableBorderWidth ?? 2,
       datePart: settings?.defaultDatePart || 'Month',
-      positiveBarColor: settings.positiveBarColor ?? '#62BB9A',
+      positiveBarColor: settings.positiveBarColor ?? '#00FF00',
       negativeBarColor: settings.negativeBarColor ?? '#FF0000',
       barRounding: settings.barRounding ?? 10,
       sparklineColor: settings.sparklineColor ?? 'blue',
-      // New font settings
-      valueFontFamily: settings.valueFontFamily || 'Arial',
-      valueFontSize: settings.valueFontSize || 14, // Default to 14px
-      valueFontColor: settings.valueFontColor || '#000000',
+      // Font settings
       headerFontFamily: settings.headerFontFamily || 'Arial',
-      headerFontSize: settings.headerFontSize || 14, // Default to 14px
-      headerFontColor: settings.headerFontColor ?? '#000000',
+      headerFontSize: settings.headerFontSize || 12,
+      headerFontWeight: settings.headerFontWeight || 600,
+      headerFontColor: settings.headerFontColor || '#21314d',
+      cellFontFamily: settings.valueFontFamily || 'Arial',
+      cellFontSize: settings.valueFontSize || 12,
+      cellFontWeight: settings.cellFontWeight || 400,
+      cellFontColor: settings.valueFontColor || '#393e41',
+      rowFontColor: '#5f6972'
     });
   }
 
   return { initialLists, initialGroupLabels: stateLabels };
 };
 
+/**
+ * Applies conditional formatting to a value based on binding settings.
+ */
 export const applyConditionalFormatting = (
   value: number,
   index: number,
@@ -187,10 +296,16 @@ export const applyConditionalFormatting = (
   return defaultColor;
 };
 
+/**
+ * Returns the maximum value in a specified column.
+ */
 export const getMaxValueInColumn = (lists: number[][][], colIndex: number): number => {
   return Math.max(...lists.map(row => Math.max(...row[colIndex])));
 };
 
+/**
+ * A helper to get the conditional text color based on the value and binding settings.
+ */
 export const getConditionalColor = (
   value: number,
   index: number,
